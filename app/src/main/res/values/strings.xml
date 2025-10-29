@@ -1,0 +1,69 @@
+<resources>
+    <string name="app_name">TodoList App</string>
+
+    <!-- Login Screen -->
+    <string name="welcome_back">Chào mừng trở lại</string>
+    <string name="login_subtitle">Đăng nhập để tiếp tục</string>
+    <string name="email_hint">Email hoặc tên đăng nhập</string>
+    <string name="password_hint">Mật khẩu</string>
+    <string name="forgot_password">Quên mật khẩu?</string>
+    <string name="login_button">ĐĂNG NHẬP</string>
+    <string name="login_with_facebook">ĐĂNG NHẬP BẰNG FACEBOOK</string>
+    <string name="dont_have_account">Chưa có tài khoản? </string>
+    <string name="sign_up_now">Đăng ký ngay</string>
+    <string name="or">hoặc</string>
+
+    <!-- Register Screen -->
+    <string name="create_account">Tạo tài khoản</string>
+    <string name="register_subtitle">Điền thông tin để đăng ký</string>
+    <string name="full_name_hint">Tên người dùng</string>
+    <string name="username_hint">Tên đăng nhập</string>
+    <string name="confirm_password_hint">Xác nhận mật khẩu</string>
+    <string name="terms_agreement">Tôi đồng ý với Điều khoản sử dụng và Chính sách bảo mật</string>
+    <string name="create_account_button">TẠO TÀI KHOẢN</string>
+    <string name="register_with_facebook">ĐĂNG KÝ BẰNG FACEBOOK</string>
+    <string name="already_have_account">Đã có tài khoản? </string>
+    <string name="login_now">Đăng nhập ngay</string>
+
+    <!-- Validation Messages -->
+    <string name="error_empty_email">Vui lòng nhập email hoặc tên đăng nhập</string>
+    <string name="error_invalid_email">Email không hợp lệ</string>
+    <string name="error_empty_password">Vui lòng nhập mật khẩu</string>
+    <string name="error_password_too_short">Mật khẩu phải có ít nhất 6 ký tự</string>
+    <string name="error_empty_name">Vui lòng nhập tên người dùng</string>
+    <string name="error_name_too_short">Tên phải có ít nhất 2 ký tự</string>
+    <string name="error_empty_username">Vui lòng nhập tên đăng nhập</string>
+    <string name="error_username_too_short">Tên đăng nhập phải có ít nhất 3 ký tự</string>
+    <string name="error_username_contains_space">Tên đăng nhập không được chứa khoảng trắng</string>
+    <string name="error_password_weak">Mật khẩu phải chứa ít nhất 1 chữ cái và 1 số</string>
+    <string name="error_password_not_match">Mật khẩu xác nhận không khớp</string>
+    <string name="error_terms_not_accepted">Vui lòng đồng ý với điều khoản sử dụng</string>
+
+    <!-- Success Messages -->
+    <string name="login_success">Đăng nhập thành công!</string>
+    <string name="register_success">Tạo tài khoản thành công!</string>
+
+    <!-- Error Messages -->
+    <string name="login_failed">Email/tên đăng nhập hoặc mật khẩu không đúng</string>
+    <string name="network_error">Lỗi kết nối mạng. Vui lòng thử lại.</string>
+
+    <!-- Loading Messages -->
+    <string name="logging_in">Đang đăng nhập...</string>
+    <string name="creating_account">Đang tạo tài khoản...</string>
+
+    <!-- Facebook Configuration (Replace with your actual Facebook App ID and Client Token) -->
+    <string name="facebook_app_id">2512941732412113</string>
+    <string name="facebook_client_token">6becb0af0d0c03e4a6916e11c9e76d86</string>
+    <string name="fb_login_protocol_scheme">fb2512941732412113</string>
+
+    <!-- Facebook Messages -->
+    <string name="facebook_login_cancelled">Đăng nhập Facebook bị hủy</string>
+    <string name="facebook_login_error">Lỗi đăng nhập Facebook</string>
+    <string name="facebook_feature_coming_soon">Chức năng đăng nhập Facebook sẽ được triển khai</string>
+    <string name="facebook_register_coming_soon">Chức năng đăng ký Facebook sẽ được triển khai</string>
+
+    <!-- Other -->
+    <string name="forgot_password_feature">Chức năng quên mật khẩu</string>
+    <string name="back">Quay lại</string>
+
+</resources>

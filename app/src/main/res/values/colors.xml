@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="background_gray">#F5F5F5</color>
+    <color name="tab_active">#007AFF</color>
+    <color name="tab_inactive">#8E8E93</color>
+    <color name="priority_high">#FF3B30</color>
+    <color name="priority_medium">#FF9500</color>
+    <color name="priority_low">#34C759</color>
+    <color name="button_primary">#007AFF</color>
+    <color name="button_secondary">#E5E5EA</color>
+    <color name="primary_color">#3F51B5</color>
+    <color name="primary_dark">#303F9F</color>
+    <color name="primary_light">#C5CAE9</color>
+
+    <!-- Accent Colors -->
+    <color name="accent_color">#FF4081</color>
+
+    <!-- Text Colors -->
+    <color name="primary_text">#212121</color>
+    <color name="secondary_text">#757575</color>
+
+    <!-- Background Colors -->
+    <color name="background_color">#FAFAFA</color>
+    <color name="surface_color">#FFFFFF</color>
+
+    <!-- Divider -->
+    <color name="divider_color">#BDBDBD</color>
+
+    <!-- Status Colors -->
+    <color name="error_color">#F44336</color>
+    <color name="success_color">#4CAF50</color>
+
+    <!-- Transparent -->
+    <color name="transparent">#00000000</color>
+
+    <!-- Facebook Blue -->
+    <color name="facebook_blue">#1877F2</color>
+</resources>
