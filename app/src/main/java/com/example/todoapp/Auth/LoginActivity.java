@@ -79,7 +79,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        Quên mật khẩu
+       // Quên mật khẩu
         findViewById(R.id.tvForgotPassword).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
