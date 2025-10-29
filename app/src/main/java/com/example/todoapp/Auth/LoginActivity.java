@@ -42,12 +42,12 @@ public class LoginActivity extends AppCompatActivity {
 
     // Lưu trạng thái đăng nhập
 
-//        if (authRepository.getCurrentUser() != null) {
-//            // ✅ Đã đăng nhập → sang Main luôn, không cần Login lại
-//            startActivity(new Intent(this, MainActivity.class));
-//            finish(); // Đóng LoginActivity
-//            return;
-//        }
+        if (authRepository.getCurrentUser() != null) {
+            // ✅ Đã đăng nhập → sang Main luôn, không cần Login lại
+            startActivity(new Intent(this, MainActivity.class));
+            finish(); // Đóng LoginActivity
+            return;
+        }
 
 
         initViews();
@@ -79,37 +79,37 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        //Quên mật khẩu
-//        findViewById(R.id.tvForgotPassword).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                EditText input = new EditText(LoginActivity.this);
-//                input.setHint("Nhập email của bạn");
-//
-//                new AlertDialog.Builder(LoginActivity.this)
-//                        .setTitle("Quên mật khẩu")
-//                        .setMessage("Nhập email để nhận liên kết đặt lại mật khẩu")
-//                        .setView(input)
-//                        .setPositiveButton("Gửi", (dialog, which) -> {
-//                            String email = input.getText().toString().trim();
-//                            if (email.isEmpty()) {
-//                                Toast.makeText(LoginActivity.this, "Vui lòng nhập email", Toast.LENGTH_SHORT).show();
-//                                return;
-//                            }
-//
-//                            FirebaseAuth.getInstance().sendPasswordResetEmail(email)
-//                                    .addOnCompleteListener(task -> {
-//                                        if (task.isSuccessful()) {
-//                                            Toast.makeText(LoginActivity.this, "Đã gửi email khôi phục đến " + email, Toast.LENGTH_LONG).show();
-//                                        } else {
-//                                            Toast.makeText(LoginActivity.this, "Lỗi: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-//                                        }
-//                                    });
-//                        })
-//                        .setNegativeButton("Hủy", null)
-//                        .show();
-//            }
-//        });
+        Quên mật khẩu
+        findViewById(R.id.tvForgotPassword).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EditText input = new EditText(LoginActivity.this);
+                input.setHint("Nhập email của bạn");
+
+                new AlertDialog.Builder(LoginActivity.this)
+                        .setTitle("Quên mật khẩu")
+                        .setMessage("Nhập email để nhận liên kết đặt lại mật khẩu")
+                        .setView(input)
+                        .setPositiveButton("Gửi", (dialog, which) -> {
+                            String email = input.getText().toString().trim();
+                            if (email.isEmpty()) {
+                                Toast.makeText(LoginActivity.this, "Vui lòng nhập email", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+                                    .addOnCompleteListener(task -> {
+                                        if (task.isSuccessful()) {
+                                            Toast.makeText(LoginActivity.this, "Đã gửi email khôi phục đến " + email, Toast.LENGTH_LONG).show();
+                                        } else {
+                                            Toast.makeText(LoginActivity.this, "Lỗi: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                                        }
+                                    });
+                        })
+                        .setNegativeButton("Hủy", null)
+                        .show();
+            }
+        });
 
 
         // Facebook login button click
