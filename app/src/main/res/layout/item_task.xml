@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardTask"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#F0F0F0">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <CheckBox
+            android:id="@+id/taskCheckbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginEnd="16dp"/>
+
+        <TextView
+            android:id="@+id/taskTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/taskCheckbox"
+            android:layout_toStartOf="@id/iconFlag"
+            android:textColor="#333333"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="Nghiêm Vu 2" />
+
+        <TextView
+            android:id="@+id/taskSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/taskTitle"
+            android:layout_toEndOf="@id/taskCheckbox"
+            android:layout_toStartOf="@id/iconFlag"
+            android:layout_marginTop="4dp"
+            android:textColor="#7F7F7F"
+            android:textSize="14sp"
+            tools:text="Bai Tap Ve nha" />
+
+        <ImageView
+            android:id="@+id/iconFlag"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="4dp"
+            android:src="@drawable/ic_flag_red"
+            android:visibility="visible" />
+
+        <ImageView
+            android:id="@+id/iconCategory"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_below="@id/iconFlag"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/ic_work"
+            android:visibility="visible" />
+
+    </RelativeLayout>
+</androidx.cardview.widget.CardView>

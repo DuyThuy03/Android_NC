@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#EAEAEA">
+    android:background="@color/background_gray">
 
     <!-- Search Bar Layout -->
     <LinearLayout
@@ -150,7 +150,7 @@
         android:id="@+id/tasksRecyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#EAEAEA"
+        android:background="@android:color/transparent" android:paddingTop="8dp"
         android:padding="8dp"
         app:layout_constraintBottom_toTopOf="@id/bottomSection"
         app:layout_constraintEnd_toEndOf="parent"

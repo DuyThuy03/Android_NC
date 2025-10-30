@@ -1,17 +1,12 @@
 package com.example.todoapp;
 
 import android.content.Intent;
-import android.graphics.Canvas;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -21,36 +16,38 @@ import android.widget.HorizontalScrollView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.todoapp.adapter.TaskAdapter;
 import com.example.todoapp.Auth.LoginActivity;
 import com.example.todoapp.Repository.FirebaseAuthRepository;
 import com.example.todoapp.Repository.FirebaseCategoryRepository;
 import com.example.todoapp.Repository.FirebaseTaskRepository;
 import com.example.todoapp.model.Category;
+import com.example.todoapp.model.DateHeader; // ⬅️ THÊM IMPORT
 import com.example.todoapp.model.Task;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private TaskAdapter adapter;
-    private List<Task> taskList;
+
+    private List<Object> displayList;
     private List<Task> allTasks;
+
     private ImageButton addTask, btnClearSearch;
     private ProgressBar progressBar;
     private EditText searchEditText;
     private LinearLayout chipsContainer;
 
-    // Filter chips
     private TextView chipHighPriority, chipMediumPriority, chipLowPriority;
     private TextView chipCompleted, chipPending;
     private TextView currentSelectedChip;
@@ -63,6 +60,9 @@ public class MainActivity extends AppCompatActivity {
     private String currentFilterType = "none";
     private String currentFilterValue = "";
     private String currentSearchQuery = "";
+
+    // ⭐️ HÀM MỚI: Lưu trạng thái thu gọn/mở rộng
+    private Map<String, Boolean> groupExpansionState = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,7 +78,6 @@ public class MainActivity extends AppCompatActivity {
         searchEditText = findViewById(R.id.searchEditText);
         btnClearSearch = findViewById(R.id.btnClearSearch);
 
-        // Tìm HorizontalScrollView và lấy LinearLayout bên trong
         View searchBarLayout = findViewById(R.id.searchBarLayout);
         HorizontalScrollView horizontalScrollView = (HorizontalScrollView)
                 ((LinearLayout) searchBarLayout).getChildAt(1);
@@ -91,78 +90,101 @@ public class MainActivity extends AppCompatActivity {
         chipPending = findViewById(R.id.chipPending);
 
         categoryChipsMap = new HashMap<>();
-
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        taskList = new ArrayList<>();
+
+        displayList = new ArrayList<>();
         allTasks = new ArrayList<>();
 
-        adapter = new TaskAdapter(taskList, new TaskAdapter.OnTaskListener() {
+        adapter = new TaskAdapter(displayList, new TaskAdapter.OnTaskListener() {
             @Override
             public void onTaskDelete(int position) {
-                Task deletedTask = taskList.get(position);
-                new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Xác nhận xóa")
-                        .setMessage("Bạn có chắc muốn xóa task: " + deletedTask.getTitle() + "?")
-                        .setPositiveButton("Xóa", (dialog, which) -> deleteTaskFromFirebase(deletedTask, position))
-                        .setNegativeButton("Hủy", (dialog, which) -> adapter.notifyItemChanged(position))
-                        .show();
+                if (displayList.get(position) instanceof Task) {
+                    Task deletedTask = (Task) displayList.get(position);
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Xác nhận xóa")
+                            .setMessage("Bạn có chắc muốn xóa task: " + deletedTask.getTitle() + "?")
+                            .setPositiveButton("Xóa", (dialog, which) -> deleteTaskFromFirebase(deletedTask, position))
+                            .setNegativeButton("Hủy", (dialog, which) -> adapter.notifyItemChanged(position))
+                            .show();
+                }
             }
 
             @Override
             public void onTaskEdit(int position) {
-                Toast.makeText(MainActivity.this, "Sửa task: " + taskList.get(position).getTitle(), Toast.LENGTH_SHORT).show();
+                if (displayList.get(position) instanceof Task) {
+                    Task task = (Task) displayList.get(position);
+                    Toast.makeText(MainActivity.this, "Sửa task: " + task.getTitle(), Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override
             public void onTaskClick(int position) {
-                Task task = taskList.get(position);
-                Intent intent = new Intent(MainActivity.this, com.example.todoapp.TaskDetail.TaskDetailActivity.class);
+                if (displayList.get(position) instanceof Task) {
+                    Task task = (Task) displayList.get(position);
+                    Intent intent = new Intent(MainActivity.this, com.example.todoapp.TaskDetail.TaskDetailActivity.class);
+                    // (Giữ nguyên putExtra)
+                    intent.putExtra("taskId", task.getTaskId());
+                    intent.putExtra("title", task.getTitle());
+                    intent.putExtra("description", task.getDescription());
+                    intent.putExtra("categoryId", task.getCategoryId());
+                    intent.putExtra("priority", task.getPriority());
+                    intent.putExtra("dueDate", task.getDueDate());
+                    intent.putExtra("createdAt", task.getCreatedAt());
+                    intent.putExtra("updatedAt", task.getUpdatedAt());
+                    intent.putExtra("isCompleted", task.isCompleted());
+                    if (task.getNotes() != null)
+                        intent.putStringArrayListExtra("notes", new ArrayList<>(task.getNotes()));
+                    if (task.getSubtasks() != null)
+                        intent.putStringArrayListExtra("subtasks", new ArrayList<>(task.getSubtasks()));
 
-                intent.putExtra("taskId", task.getTaskId());
-                intent.putExtra("title", task.getTitle());
-                intent.putExtra("description", task.getDescription());
-                intent.putExtra("categoryId", task.getCategoryId());
-                intent.putExtra("priority", task.getPriority());
-                intent.putExtra("dueDate", task.getDueDate());
-                intent.putExtra("createdAt", task.getCreatedAt());
-                intent.putExtra("updatedAt", task.getUpdatedAt());
-                intent.putExtra("isCompleted", task.isCompleted());
-                if (task.getNotes() != null)
-                    intent.putStringArrayListExtra("notes", new ArrayList<>(task.getNotes()));
-                if (task.getSubtasks() != null)
-                    intent.putStringArrayListExtra("subtasks", new ArrayList<>(task.getSubtasks()));
+                    startActivity(intent);
+                }
+            }
 
-                startActivity(intent);
+            @Override
+            public void onTaskCheckChanged(int position, boolean isChecked) {
+                if (position < 0 || position >= displayList.size() || !(displayList.get(position) instanceof Task)) {
+                    return;
+                }
+
+                Task task = (Task) displayList.get(position);
+                task.setCompleted(isChecked);
+
+                taskRepository.updateTask(task)
+                        .addOnSuccessListener(aVoid -> {
+                            // ⭐️ YÊU CẦU 2: Sắp xếp lại danh sách
+                            updateGroupedList();
+                        })
+                        .addOnFailureListener(e -> {
+                            task.setCompleted(!isChecked);
+                            adapter.notifyItemChanged(position); // Hoàn tác
+                            Toast.makeText(MainActivity.this, "Lỗi cập nhật", Toast.LENGTH_SHORT).show();
+                        });
+            }
+
+            // ⭐️ YÊU CẦU 3: Xử lý click vào Header
+            @Override
+            public void onHeaderClick(int position) {
+                if (displayList.get(position) instanceof DateHeader) {
+                    DateHeader header = (DateHeader) displayList.get(position);
+                    // Lật trạng thái
+                    boolean isExpanded = groupExpansionState.getOrDefault(header.title, true);
+                    groupExpansionState.put(header.title, !isExpanded);
+                    // Xây dựng lại danh sách
+                    updateGroupedList();
+                }
             }
         });
 
         recyclerView.setAdapter(adapter);
 
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new SwipeToRevealCallback());
-        itemTouchHelper.attachToRecyclerView(recyclerView);
-
         setupSearchListener();
         setupStaticFilterChips();
 
         addTask.setOnClickListener(v -> openAddTask());
-
         loadCategoriesAndTasks();
-
-        //Lưu trạng thái đăng nhập
         firebaseAuth = new FirebaseAuthRepository();
-
-            if (firebaseAuth.getCurrentUser() != null) {
-                // ✅ Đã đăng nhập → sang trang chính
-                startActivity(new Intent(this, MainActivity.class));
-            }
-
-
-
     }
-
-
-
-
 
     @Override
     protected void onResume() {
@@ -174,24 +196,25 @@ public class MainActivity extends AppCompatActivity {
         searchEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 currentSearchQuery = s.toString().trim();
                 btnClearSearch.setVisibility(currentSearchQuery.isEmpty() ? View.GONE : View.VISIBLE);
-                applySearchFilter();
+                updateGroupedList();
             }
-
             @Override
             public void afterTextChanged(Editable s) {}
         });
-
         btnClearSearch.setOnClickListener(v -> {
             searchEditText.setText("");
             currentSearchQuery = "";
         });
     }
 
+    // (Các hàm setupStaticFilterChips, loadCategoriesAndTasks, createCategoryChips,
+    // selectChip, resetChipSelection giữ nguyên, không cần thay đổi)
+
+    // ... (Giữ nguyên các hàm từ setupStaticFilterChips đến resetChipSelection) ...
     private void setupStaticFilterChips() {
         chipHighPriority.setOnClickListener(v -> selectChip(chipHighPriority, "priority", "high"));
         chipMediumPriority.setOnClickListener(v -> selectChip(chipMediumPriority, "priority", "medium"));
@@ -217,13 +240,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void createCategoryChips(List<Category> categories) {
-        // Xóa các category chips cũ
         for (TextView chip : categoryChipsMap.values()) {
             chipsContainer.removeView(chip);
         }
         categoryChipsMap.clear();
 
-        // Tạo chips mới cho từng category và thêm vào ĐẦU container
         for (int i = 0; i < categories.size(); i++) {
             Category category = categories.get(i);
             TextView chip = createCategoryChip(category);
@@ -234,29 +255,19 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView createCategoryChip(Category category) {
         TextView chip = new TextView(this);
-
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                (int) (32 * getResources().getDisplayMetrics().density)
-        );
+                LinearLayout.LayoutParams.WRAP_CONTENT, (int) (32 * getResources().getDisplayMetrics().density));
         params.setMarginEnd((int) (8 * getResources().getDisplayMetrics().density));
         chip.setLayoutParams(params);
-
         chip.setText(category.getName());
         chip.setTextSize(13);
         chip.setGravity(android.view.Gravity.CENTER);
         chip.setPadding(
-                (int) (16 * getResources().getDisplayMetrics().density),
-                0,
-                (int) (16 * getResources().getDisplayMetrics().density),
-                0
-        );
-
+                (int) (16 * getResources().getDisplayMetrics().density), 0,
+                (int) (16 * getResources().getDisplayMetrics().density), 0);
         chip.setBackground(ContextCompat.getDrawable(this, R.drawable.bg_chip_unselected));
         chip.setTextColor(ContextCompat.getColor(this, android.R.color.darker_gray));
-
         chip.setOnClickListener(v -> selectChip(chip, "category", category.getCategoryId()));
-
         return chip;
     }
 
@@ -268,18 +279,14 @@ public class MainActivity extends AppCompatActivity {
             loadTasksFromFirebase();
             return;
         }
-
         if (currentSelectedChip != null) {
             resetChipSelection(currentSelectedChip);
         }
-
         chip.setBackground(ContextCompat.getDrawable(this, R.drawable.bg_chip_selected));
         chip.setTextColor(ContextCompat.getColor(this, android.R.color.white));
-
         currentSelectedChip = chip;
         currentFilterType = filterType;
         currentFilterValue = filterValue;
-
         loadTasksFromFirebase();
     }
 
@@ -288,82 +295,130 @@ public class MainActivity extends AppCompatActivity {
         chip.setTextColor(ContextCompat.getColor(this, android.R.color.darker_gray));
     }
 
-    private void applySearchFilter() {
+
+    // ⭐️ HÀM MỚI: Lấy khóa (key) để sắp xếp nhóm
+    private String getGroupKey(long dueDate) {
+        if (dueDate == 0) {
+            return "4_Không có ngày"; // Luôn ở cuối
+        }
+
+        Calendar now = Calendar.getInstance();
+        Calendar taskDate = Calendar.getInstance();
+        taskDate.setTimeInMillis(dueDate);
+
+        now.set(Calendar.HOUR_OF_DAY, 0); now.set(Calendar.MINUTE, 0); now.set(Calendar.SECOND, 0); now.set(Calendar.MILLISECOND, 0);
+        taskDate.set(Calendar.HOUR_OF_DAY, 0); taskDate.set(Calendar.MINUTE, 0); taskDate.set(Calendar.SECOND, 0); taskDate.set(Calendar.MILLISECOND, 0);
+
+        long diff = taskDate.getTimeInMillis() - now.getTimeInMillis();
+
+        if (diff < 0) {
+            return "1_Hôm trước";
+        } else if (diff == 0) {
+            return "2_Hôm nay";
+        } else {
+            return "3_Sắp tới";
+        }
+    }
+
+    // ⭐️ HÀM MỚI: Lấy tiêu đề từ khóa
+    private String getGroupTitleFromKey(String key) {
+        // Trả về "Hôm trước", "Hôm nay", ... từ "1_Hôm trước", "2_Hôm nay", ...
+        return key.substring(2);
+    }
+
+    // ⭐️ HÀM CẬP NHẬT: Logic sắp xếp và nhóm
+    private void updateGroupedList() {
         List<Task> filteredList = new ArrayList<>();
 
+        // 1. Lọc
         for (Task task : allTasks) {
             boolean matchSearch = true;
-
             if (!currentSearchQuery.isEmpty()) {
                 String query = currentSearchQuery.toLowerCase();
                 String title = task.getTitle() != null ? task.getTitle().toLowerCase() : "";
                 String description = task.getDescription() != null ? task.getDescription().toLowerCase() : "";
                 matchSearch = title.contains(query) || description.contains(query);
             }
-
             if (matchSearch) {
                 filteredList.add(task);
             }
         }
 
-        taskList.clear();
-        taskList.addAll(filteredList);
+        // 2. Sắp xếp (Sort)
+        Collections.sort(filteredList, (t1, t2) -> {
+            // Sắp xếp theo nhóm ngày
+            String groupKey1 = getGroupKey(t1.getDueDate());
+            String groupKey2 = getGroupKey(t2.getDueDate());
+            int groupCompare = groupKey1.compareTo(groupKey2);
+            if (groupCompare != 0) {
+                return groupCompare;
+            }
+
+            // ⭐️ YÊU CẦU 2: Cùng nhóm -> Sắp xếp theo hoàn thành
+            // (false - chưa xong) lên trước (true - đã xong)
+            if (t1.isCompleted() != t2.isCompleted()) {
+                return t1.isCompleted() ? 1 : -1;
+            }
+
+            // Cùng trạng thái -> Sắp xếp theo ngày (cụ thể)
+            return Long.compare(t1.getDueDate(), t2.getDueDate());
+        });
+
+        // 3. Xây dựng danh sách hiển thị
+        displayList.clear();
+        String currentGroupKey = "";
+
+        for (Task task : filteredList) {
+            String taskGroupKey = getGroupKey(task.getDueDate());
+
+            if (!taskGroupKey.equals(currentGroupKey)) {
+                // Bắt đầu nhóm mới
+                currentGroupKey = taskGroupKey;
+                String title = getGroupTitleFromKey(taskGroupKey);
+                // Lấy trạng thái (mặc định là mở)
+                boolean isExpanded = groupExpansionState.getOrDefault(title, true);
+
+                displayList.add(new DateHeader(title, isExpanded));
+            }
+
+            // ⭐️ YÊU CẦU 3: Chỉ thêm task nếu nhóm đang MỞ
+            if (groupExpansionState.getOrDefault(getGroupTitleFromKey(taskGroupKey), true)) {
+                displayList.add(task);
+            }
+        }
+
         adapter.notifyDataSetChanged();
     }
+
 
     private void loadTasksFromFirebase() {
         showLoading(true);
 
+        com.google.android.gms.tasks.Task<List<Task>> taskQuery;
+
         if (currentFilterType.equals("none")) {
-            taskRepository.getAllTasks()
-                    .addOnSuccessListener(tasks -> {
-                        showLoading(false);
-                        allTasks.clear();
-                        if (tasks != null) allTasks.addAll(tasks);
-                        applySearchFilter();
-                    })
-                    .addOnFailureListener(e -> {
-                        showLoading(false);
-                        Toast.makeText(this, "Lỗi tải dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
+            taskQuery = taskRepository.getAllTasks();
         } else if (currentFilterType.equals("category")) {
-            taskRepository.getTasksByCategory(currentFilterValue)
-                    .addOnSuccessListener(tasks -> {
-                        showLoading(false);
-                        allTasks.clear();
-                        if (tasks != null) allTasks.addAll(tasks);
-                        applySearchFilter();
-                    })
-                    .addOnFailureListener(e -> {
-                        showLoading(false);
-                        Toast.makeText(this, "Lỗi tải dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
+            taskQuery = taskRepository.getTasksByCategory(currentFilterValue);
         } else if (currentFilterType.equals("priority")) {
-            taskRepository.getTasksByPriority(currentFilterValue)
-                    .addOnSuccessListener(tasks -> {
-                        showLoading(false);
-                        allTasks.clear();
-                        if (tasks != null) allTasks.addAll(tasks);
-                        applySearchFilter();
-                    })
-                    .addOnFailureListener(e -> {
-                        showLoading(false);
-                        Toast.makeText(this, "Lỗi tải dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
+            taskQuery = taskRepository.getTasksByPriority(currentFilterValue);
         } else if (currentFilterType.equals("completion")) {
             boolean isCompleted = currentFilterValue.equals("completed");
-            taskRepository.getTasksByCompletionStatus(isCompleted)
-                    .addOnSuccessListener(tasks -> {
-                        showLoading(false);
-                        allTasks.clear();
-                        if (tasks != null) allTasks.addAll(tasks);
-                        applySearchFilter();
-                    })
-                    .addOnFailureListener(e -> {
-                        showLoading(false);
-                        Toast.makeText(this, "Lỗi tải dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
+            taskQuery = taskRepository.getTasksByCompletionStatus(isCompleted);
+        } else {
+            taskQuery = taskRepository.getAllTasks();
         }
+
+        taskQuery.addOnSuccessListener(tasks -> {
+                    showLoading(false);
+                    allTasks.clear();
+                    if (tasks != null) allTasks.addAll(tasks);
+                    updateGroupedList(); // ⬅️ Gọi hàm update mới
+                })
+                .addOnFailureListener(e -> {
+                    showLoading(false);
+                    Toast.makeText(this, "Lỗi tải dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void deleteTaskFromFirebase(Task task, int position) {
@@ -372,7 +427,7 @@ public class MainActivity extends AppCompatActivity {
                 .addOnSuccessListener(aVoid -> {
                     showLoading(false);
                     allTasks.remove(task);
-                    adapter.removeTask(position);
+                    updateGroupedList(); // ⬅️ Gọi hàm update mới
                     Toast.makeText(this, "Đã xóa task", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
@@ -389,149 +444,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void openAddTask() {
         startActivity(new Intent(MainActivity.this, AddTaskActivity.class));
-    }
-
-    // ==================== ADAPTER ====================
-    public static class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
-        private List<Task> taskList;
-        private OnTaskListener listener;
-
-        public interface OnTaskListener {
-            void onTaskDelete(int position);
-            void onTaskEdit(int position);
-            void onTaskClick(int position);
-        }
-
-        public TaskAdapter(List<Task> taskList, OnTaskListener listener) {
-            this.taskList = taskList;
-            this.listener = listener;
-        }
-
-        @NonNull
-        @Override
-        public TaskViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_task_swipe, parent, false);
-            return new TaskViewHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
-            Task task = taskList.get(position);
-            holder.taskTitle.setText(task.getTitle());
-            holder.taskSubtitle.setText(task.getDescription());
-
-            holder.iconDelete.setOnClickListener(v -> {
-                int pos = holder.getAdapterPosition();
-                if (listener != null && pos != RecyclerView.NO_POSITION)
-                    listener.onTaskDelete(pos);
-            });
-
-            holder.iconCheck.setOnClickListener(v -> {
-                Toast.makeText(v.getContext(), "Hoàn thành: " + task.getTitle(), Toast.LENGTH_SHORT).show();
-            });
-
-            holder.iconShare.setOnClickListener(v -> {
-                Toast.makeText(v.getContext(), "Chia sẻ: " + task.getTitle(), Toast.LENGTH_SHORT).show();
-            });
-
-            holder.cardTask.setOnClickListener(v -> {
-                int pos = holder.getAdapterPosition();
-                if (listener != null && pos != RecyclerView.NO_POSITION)
-                    listener.onTaskClick(pos);
-            });
-        }
-
-        @Override
-        public int getItemCount() {
-            return taskList.size();
-        }
-
-        public void removeTask(int position) {
-            taskList.remove(position);
-            notifyItemRemoved(position);
-        }
-
-        static class TaskViewHolder extends RecyclerView.ViewHolder {
-            CardView cardTask;
-            TextView taskTitle, taskSubtitle;
-            ImageView iconDelete, iconShare, iconCheck;
-            LinearLayout backgroundLeft, backgroundRight;
-
-            public TaskViewHolder(@NonNull View itemView) {
-                super(itemView);
-                cardTask = itemView.findViewById(R.id.cardTask);
-                taskTitle = itemView.findViewById(R.id.taskTitle);
-                taskSubtitle = itemView.findViewById(R.id.taskSubtitle);
-                iconDelete = itemView.findViewById(R.id.iconDelete);
-                iconShare = itemView.findViewById(R.id.iconShare);
-                iconCheck = itemView.findViewById(R.id.iconCheck);
-                backgroundLeft = itemView.findViewById(R.id.backgroundLeft);
-                backgroundRight = itemView.findViewById(R.id.backgroundRight);
-            }
-        }
-    }
-
-    // ==================== SWIPE TO REVEAL ====================
-    public class SwipeToRevealCallback extends ItemTouchHelper.SimpleCallback {
-        public SwipeToRevealCallback() {
-            super(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT);
-        }
-
-        @Override
-        public boolean onMove(@NonNull RecyclerView recyclerView,
-                              @NonNull RecyclerView.ViewHolder viewHolder,
-                              @NonNull RecyclerView.ViewHolder target) {
-            return false;
-        }
-
-        @Override
-        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-            adapter.notifyItemChanged(viewHolder.getAdapterPosition());
-        }
-
-        @Override
-        public void onChildDraw(@NonNull Canvas c,
-                                @NonNull RecyclerView recyclerView,
-                                @NonNull RecyclerView.ViewHolder viewHolder,
-                                float dX, float dY,
-                                int actionState,
-                                boolean isCurrentlyActive) {
-
-            if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-                View itemView = viewHolder.itemView;
-                View cardTask = itemView.findViewById(R.id.cardTask);
-                View bgLeft = itemView.findViewById(R.id.backgroundLeft);
-                View bgRight = itemView.findViewById(R.id.backgroundRight);
-
-                float maxSwipe = 250f;
-                if (dX > maxSwipe) dX = maxSwipe;
-                if (dX < -maxSwipe) dX = -maxSwipe;
-
-                cardTask.setTranslationX(dX);
-
-                if (dX > 0) {
-                    bgRight.setVisibility(View.VISIBLE);
-                    bgLeft.setVisibility(View.GONE);
-                } else if (dX < 0) {
-                    bgLeft.setVisibility(View.VISIBLE);
-                    bgRight.setVisibility(View.GONE);
-                } else {
-                    bgLeft.setVisibility(View.GONE);
-                    bgRight.setVisibility(View.GONE);
-                }
-            }
-        }
-
-        @Override
-        public void clearView(@NonNull RecyclerView recyclerView,
-                              @NonNull RecyclerView.ViewHolder viewHolder) {
-            super.clearView(recyclerView, viewHolder);
-            View itemView = viewHolder.itemView;
-            itemView.findViewById(R.id.cardTask).setTranslationX(0);
-            itemView.findViewById(R.id.backgroundLeft).setVisibility(View.GONE);
-            itemView.findViewById(R.id.backgroundRight).setVisibility(View.GONE);
-        }
     }
 
 
