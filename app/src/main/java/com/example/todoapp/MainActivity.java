@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private List<Object> displayList;
     private List<Task> allTasks;
 
-    private ImageButton addTask, btnClearSearch;
+    private ImageButton addTask, btnClearSearch,navCalendar;
     private ProgressBar progressBar;
     private EditText searchEditText;
     private LinearLayout chipsContainer;
@@ -88,6 +88,11 @@ public class MainActivity extends AppCompatActivity {
         chipLowPriority = findViewById(R.id.chipLowPriority);
         chipCompleted = findViewById(R.id.chipCompleted);
         chipPending = findViewById(R.id.chipPending);
+        navCalendar = findViewById(R.id.nav_calendar);
+        navCalendar.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, CalendarActivity.class);
+            startActivity(intent);
+        });
 
         categoryChipsMap = new HashMap<>();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
