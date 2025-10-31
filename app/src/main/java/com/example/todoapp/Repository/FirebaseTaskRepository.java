@@ -18,8 +18,9 @@ public class FirebaseTaskRepository {
         auth = FirebaseAuth.getInstance();
     }
 
+    // 🔽 CHỈNH SỬA HÀM NÀY 🔽
     // 🔹 Thêm Task
-    public com.google.android.gms.tasks.Task<Void> addTask(Task task) {
+    public com.google.android.gms.tasks.Task<String> addTask(Task task) { // ⬅️ Sửa kiểu trả về thành Task<String>
         if (task.getTaskId() == null || task.getTaskId().isEmpty()) {
             task.setTaskId(db.collection(COLLECTION_NAME).document().getId());
         }
@@ -29,10 +30,21 @@ public class FirebaseTaskRepository {
         task.setCreatedAt(System.currentTimeMillis());
         task.setUpdatedAt(System.currentTimeMillis());
 
+        final String taskId = task.getTaskId(); // ⬅️ Lưu lại ID
+
         return db.collection(COLLECTION_NAME)
-                .document(task.getTaskId())
-                .set(task);
+                .document(taskId) // ⬅️ Dùng taskId ở đây
+                .set(task)
+                .continueWith(innerTask -> { // ⬅️ Thêm continueWith để trả về ID
+                    if (innerTask.isSuccessful()) {
+                        return taskId; // ⬅️ Trả về ID
+                    } else {
+                        throw innerTask.getException();
+                    }
+                });
     }
+    // 🔼 KẾT THÚC CHỈNH SỬA 🔼
+
 
     // 🔹 Lấy toàn bộ Task của user
     public com.google.android.gms.tasks.Task<List<Task>> getAllTasks() {

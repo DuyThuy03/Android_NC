@@ -22,8 +22,13 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.appcompat.widget.Toolbar; // Giả sử bạn có Toolbar, nếu không thì bỏ qua
+
+// 🔽 THÊM IMPORT MỚI 🔽
+import com.example.todoapp.NotificationScheduler;
+// 🔼 KẾT THÚC THÊM IMPORT 🔼
 
 import com.example.todoapp.R;
 import com.example.todoapp.Repository.FirebaseTaskRepository;
@@ -335,11 +340,10 @@ public class TaskDetailActivity extends AppCompatActivity {
             // Get completed status
             boolean newCompleted = cbEditCompleted.isChecked();
 
-            // Get subtasks - giữ nguyên nếu không nhập
+            // Get subtasks
             String subtasksText = etEditSubtasks.getText().toString().trim();
-            List<String> newSubtasks = currentSubtasks; // Mặc định giữ nguyên
+            List<String> newSubtasks = new ArrayList<>(); // Luôn tạo mới
             if (!subtasksText.isEmpty()) {
-                newSubtasks = new ArrayList<>();
                 String[] subtaskLines = subtasksText.split("\n");
                 for (String line : subtaskLines) {
                     if (!line.trim().isEmpty()) {
@@ -348,17 +352,22 @@ public class TaskDetailActivity extends AppCompatActivity {
                 }
             }
 
-            // Get notes - giữ nguyên nếu không nhập
+            // Get notes
             String notesText = etEditNotes.getText().toString().trim();
-            List<String> newNotes = currentNotes; // Mặc định giữ nguyên
+            List<String> newNotes = new ArrayList<>(); // Luôn tạo mới
             if (!notesText.isEmpty()) {
-                newNotes = new ArrayList<>();
                 String[] noteLines = notesText.split("\n");
                 for (String line : noteLines) {
                     if (!line.trim().isEmpty()) {
                         newNotes.add(line.trim());
                     }
                 }
+            }
+
+            // Kiểm tra thời gian (cho phép 1 phút đệm)
+            if (newDueDate <= System.currentTimeMillis() - 60000 && !newCompleted) {
+                Toast.makeText(this, "Ngày giờ mới phải ở tương lai", Toast.LENGTH_SHORT).show();
+                return;
             }
 
             // Update to Firestore
@@ -374,6 +383,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         tv.setText(sdf.format(calendar.getTime()));
     }
 
+    // 🔽 CHỈNH SỬA HÀM NÀY 🔽
     private void updateFullTaskInFirestore(String newTitle, String newDescription,
                                            String newPriority, String newCategoryId,
                                            long newDueDate, boolean newCompleted,
@@ -383,50 +393,58 @@ public class TaskDetailActivity extends AppCompatActivity {
             return;
         }
 
-        // Chỉ update các field đã thay đổi
         Map<String, Object> updates = new HashMap<>();
-
-        // Luôn update updatedAt
         updates.put("updatedAt", System.currentTimeMillis());
 
         // Kiểm tra từng field có thay đổi không
         if (!newTitle.equals(currentTitle)) {
             updates.put("title", newTitle);
         }
-
         if (!newDescription.equals(currentDescription)) {
             updates.put("description", newDescription);
         }
-
         if (!newPriority.equals(currentPriority)) {
             updates.put("priority", newPriority);
         }
-
         if (!newCategoryId.equals(currentCategoryId)) {
             updates.put("categoryId", newCategoryId);
         }
-
         if (newDueDate != currentDueDate) {
             updates.put("dueDate", newDueDate);
         }
-
         if (newCompleted != currentCompleted) {
             updates.put("completed", newCompleted);
         }
-
         if (!newSubtasks.equals(currentSubtasks)) {
             updates.put("subtasks", newSubtasks);
         }
-
         if (!newNotes.equals(currentNotes)) {
             updates.put("notes", newNotes);
         }
 
-        // Nếu không có gì thay đổi (chỉ có updatedAt)
+        // Nếu không có gì thay đổi
         if (updates.size() == 1) {
             Toast.makeText(this, "Không có thay đổi nào", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        // 🔽 THÊM LOGIC CẬP NHẬT LỊCH 🔽
+        // 1. Hủy lịch cũ (luôn luôn hủy cho chắc)
+        NotificationScheduler.cancelNotification(getApplicationContext(), taskId);
+
+        // 2. Đặt lịch mới nếu:
+        //    - Task chưa hoàn thành (newCompleted == false)
+        //    - Và ngày giờ mới ở tương lai
+        if (!newCompleted && newDueDate > System.currentTimeMillis()) {
+            NotificationScheduler.scheduleNotification(
+                    getApplicationContext(),
+                    newDueDate,
+                    taskId,
+                    newTitle,
+                    "Công việc đã đến hạn , hãy hoàn thành!!"
+            );
+        }
+        // 🔼 KẾT THÚC LOGIC CẬP NHẬT LỊCH 🔼
 
         db.collection("tasks").document(taskId)
                 .update(updates)
@@ -500,7 +518,6 @@ public class TaskDetailActivity extends AppCompatActivity {
                     .update("notes", notesList, "updatedAt", System.currentTimeMillis())
                     .addOnSuccessListener(aVoid -> {
                         Log.d("TaskDetailActivity", "Notes saved successfully");
-                        // Cập nhật thời gian hiển thị
                         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
                         tvUpdatedAt.setText("Cập nhật: " + sdf.format(new Date()));
                     })
@@ -520,11 +537,16 @@ public class TaskDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    // 🔽 CHỈNH SỬA HÀM NÀY 🔽
     private void deleteTask() {
         if (taskId == null || taskId.isEmpty()) {
             Toast.makeText(this, "Lỗi: Không tìm thấy ID nhiệm vụ", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        // 🔽 THÊM LOGIC HỦY LỊCH 🔽
+        NotificationScheduler.cancelNotification(getApplicationContext(), taskId);
+        // 🔼 KẾT THÚC LOGIC HỦY LỊCH 🔼
 
         db.collection("tasks").document(taskId)
                 .delete()
@@ -538,6 +560,8 @@ public class TaskDetailActivity extends AppCompatActivity {
                             Toast.LENGTH_SHORT).show();
                 });
     }
+    // 🔼 KẾT THÚC CHỈNH SỬA 🔼
+
 
     private void fetchCategoryName(String categoryId) {
         db.collection("categories").document(categoryId)
@@ -577,12 +601,17 @@ public class TaskDetailActivity extends AppCompatActivity {
         chipPriority.setText(getPriorityText(priority));
         setPriorityColor(chipPriority, priority);
 
-        String status = completed ? "completed" : "in_progress";
+        // 🔽 Sửa logic status 🔽
+        String status = completed ? "completed" : "pending"; // Chỉ 2 trạng thái
         chipStatus.setText(getStatusText(status));
         setStatusColor(chipStatus, status);
+        // 🔼 KẾT THÚC SỬA 🔼
 
         subtaskList.clear();
-        subtaskList.addAll(subtasks);
+        if (subtasks != null && !subtasks.isEmpty()) {
+            subtaskList.addAll(subtasks);
+        }
+
         if (subtaskList.isEmpty()) {
             subtaskList.add("Không có công việc con");
         }
@@ -606,7 +635,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         switch (status) {
             case "pending":
                 return "Đang chờ";
-            case "in_progress":
+            case "in_progress": // Giữ lại phòng trường hợp dữ liệu cũ
                 return "Đang thực hiện";
             case "completed":
                 return "Hoàn thành";
@@ -639,7 +668,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         if ("completed".equals(status)) {
             chip.setChipBackgroundColorResource(android.R.color.holo_green_light);
             chip.setTextColor(Color.WHITE);
-        } else {
+        } else { // Mặc định (pending, in_progress)
             chip.setChipBackgroundColorResource(android.R.color.darker_gray);
             chip.setTextColor(Color.WHITE);
         }
@@ -686,6 +715,15 @@ public class TaskDetailActivity extends AppCompatActivity {
         public void onBindViewHolder(SubtaskViewHolder holder, int position) {
             String subtask = subtasks.get(position);
             holder.cbSubtask.setText(subtask);
+
+            // Nếu là text "Không có công việc con" thì disable checkbox
+            if (subtask.equals("Không có công việc con")) {
+                holder.cbSubtask.setEnabled(false);
+                holder.cbSubtask.setChecked(false);
+            } else {
+                holder.cbSubtask.setEnabled(true);
+                // (Bạn có thể thêm logic lưu trạng thái check của subtask nếu muốn)
+            }
         }
 
         @Override

@@ -13,12 +13,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.HorizontalScrollView;
 
-import androidx.annotation.NonNull;
+import androidx.annotation.NonNull; // ⬅️ THÊM IMPORT
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
+import androidx.core.app.ActivityCompat; // ⬅️ THÊM IMPORT
+import androidx.core.content.ContextCompat; // ⬅️ THÊM IMPORT
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import android.content.pm.PackageManager; // ⬅️ THÊM IMPORT
+import android.Manifest; // ⬅️ THÊM IMPORT
+import android.os.Build; // ⬅️ THÊM IMPORT
 
 import com.example.todoapp.adapter.TaskAdapter;
 import com.example.todoapp.Auth.LoginActivity;
@@ -26,7 +30,7 @@ import com.example.todoapp.Repository.FirebaseAuthRepository;
 import com.example.todoapp.Repository.FirebaseCategoryRepository;
 import com.example.todoapp.Repository.FirebaseTaskRepository;
 import com.example.todoapp.model.Category;
-import com.example.todoapp.model.DateHeader; // ⬅️ THÊM IMPORT
+import com.example.todoapp.model.DateHeader;
 import com.example.todoapp.model.Task;
 
 import java.util.ArrayList;
@@ -43,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private List<Object> displayList;
     private List<Task> allTasks;
 
-    private ImageButton addTask, btnClearSearch,navCalendar;
+    private ImageButton addTask, btnClearSearch;
     private ProgressBar progressBar;
     private EditText searchEditText;
     private LinearLayout chipsContainer;
@@ -61,8 +65,11 @@ public class MainActivity extends AppCompatActivity {
     private String currentFilterValue = "";
     private String currentSearchQuery = "";
 
-    // ⭐️ HÀM MỚI: Lưu trạng thái thu gọn/mở rộng
     private Map<String, Boolean> groupExpansionState = new HashMap<>();
+
+    // 🔽 THÊM HẰNG SỐ MỚI 🔽
+    private static final int NOTIFICATION_PERMISSION_CODE = 101;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,11 +95,6 @@ public class MainActivity extends AppCompatActivity {
         chipLowPriority = findViewById(R.id.chipLowPriority);
         chipCompleted = findViewById(R.id.chipCompleted);
         chipPending = findViewById(R.id.chipPending);
-        navCalendar = findViewById(R.id.nav_calendar);
-        navCalendar.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, CalendarActivity.class);
-            startActivity(intent);
-        });
 
         categoryChipsMap = new HashMap<>();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -146,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
+            // 🔽 CHỈNH SỬA HÀM NÀY 🔽
             @Override
             public void onTaskCheckChanged(int position, boolean isChecked) {
                 if (position < 0 || position >= displayList.size() || !(displayList.get(position) instanceof Task)) {
@@ -155,9 +158,24 @@ public class MainActivity extends AppCompatActivity {
                 Task task = (Task) displayList.get(position);
                 task.setCompleted(isChecked);
 
+                // 🔽 THÊM LOGIC ĐẶT/HỦY LỊCH 🔽
+                if (isChecked) {
+                    // Nếu người dùng check hoàn thành, hủy thông báo
+                    NotificationScheduler.cancelNotification(getApplicationContext(), task.getTaskId());
+                } else {
+                    // Nếu người dùng bỏ check, đặt lại thông báo (nếu còn hạn)
+                    NotificationScheduler.scheduleNotification(
+                            getApplicationContext(),
+                            task.getDueDate(),
+                            task.getTaskId(),
+                            task.getTitle(),
+                            "Công việc của bạn sắp đến hạn!"
+                    );
+                }
+                // 🔼 KẾT THÚC LOGIC ĐẶT/HỦY LỊCH 🔼
+
                 taskRepository.updateTask(task)
                         .addOnSuccessListener(aVoid -> {
-                            // ⭐️ YÊU CẦU 2: Sắp xếp lại danh sách
                             updateGroupedList();
                         })
                         .addOnFailureListener(e -> {
@@ -166,16 +184,15 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "Lỗi cập nhật", Toast.LENGTH_SHORT).show();
                         });
             }
+            // 🔼 KẾT THÚC CHỈNH SỬA 🔼
 
-            // ⭐️ YÊU CẦU 3: Xử lý click vào Header
+
             @Override
             public void onHeaderClick(int position) {
                 if (displayList.get(position) instanceof DateHeader) {
                     DateHeader header = (DateHeader) displayList.get(position);
-                    // Lật trạng thái
                     boolean isExpanded = groupExpansionState.getOrDefault(header.title, true);
                     groupExpansionState.put(header.title, !isExpanded);
-                    // Xây dựng lại danh sách
                     updateGroupedList();
                 }
             }
@@ -189,6 +206,10 @@ public class MainActivity extends AppCompatActivity {
         addTask.setOnClickListener(v -> openAddTask());
         loadCategoriesAndTasks();
         firebaseAuth = new FirebaseAuthRepository();
+
+        // 🔽 THÊM HÀM GỌI YÊU CẦU QUYỀN 🔽
+        requestNotificationPermission();
+        // 🔼 KẾT THÚC THÊM HÀM GỌI 🔼
     }
 
     @Override
@@ -216,10 +237,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // (Các hàm setupStaticFilterChips, loadCategoriesAndTasks, createCategoryChips,
-    // selectChip, resetChipSelection giữ nguyên, không cần thay đổi)
-
-    // ... (Giữ nguyên các hàm từ setupStaticFilterChips đến resetChipSelection) ...
     private void setupStaticFilterChips() {
         chipHighPriority.setOnClickListener(v -> selectChip(chipHighPriority, "priority", "high"));
         chipMediumPriority.setOnClickListener(v -> selectChip(chipMediumPriority, "priority", "medium"));
@@ -300,11 +317,9 @@ public class MainActivity extends AppCompatActivity {
         chip.setTextColor(ContextCompat.getColor(this, android.R.color.darker_gray));
     }
 
-
-    // ⭐️ HÀM MỚI: Lấy khóa (key) để sắp xếp nhóm
     private String getGroupKey(long dueDate) {
         if (dueDate == 0) {
-            return "4_Không có ngày"; // Luôn ở cuối
+            return "4_Không có ngày";
         }
 
         Calendar now = Calendar.getInstance();
@@ -325,17 +340,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // ⭐️ HÀM MỚI: Lấy tiêu đề từ khóa
     private String getGroupTitleFromKey(String key) {
-        // Trả về "Hôm trước", "Hôm nay", ... từ "1_Hôm trước", "2_Hôm nay", ...
         return key.substring(2);
     }
 
-    // ⭐️ HÀM CẬP NHẬT: Logic sắp xếp và nhóm
     private void updateGroupedList() {
         List<Task> filteredList = new ArrayList<>();
 
-        // 1. Lọc
         for (Task task : allTasks) {
             boolean matchSearch = true;
             if (!currentSearchQuery.isEmpty()) {
@@ -349,9 +360,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // 2. Sắp xếp (Sort)
         Collections.sort(filteredList, (t1, t2) -> {
-            // Sắp xếp theo nhóm ngày
             String groupKey1 = getGroupKey(t1.getDueDate());
             String groupKey2 = getGroupKey(t2.getDueDate());
             int groupCompare = groupKey1.compareTo(groupKey2);
@@ -359,17 +368,13 @@ public class MainActivity extends AppCompatActivity {
                 return groupCompare;
             }
 
-            // ⭐️ YÊU CẦU 2: Cùng nhóm -> Sắp xếp theo hoàn thành
-            // (false - chưa xong) lên trước (true - đã xong)
             if (t1.isCompleted() != t2.isCompleted()) {
                 return t1.isCompleted() ? 1 : -1;
             }
 
-            // Cùng trạng thái -> Sắp xếp theo ngày (cụ thể)
             return Long.compare(t1.getDueDate(), t2.getDueDate());
         });
 
-        // 3. Xây dựng danh sách hiển thị
         displayList.clear();
         String currentGroupKey = "";
 
@@ -377,16 +382,12 @@ public class MainActivity extends AppCompatActivity {
             String taskGroupKey = getGroupKey(task.getDueDate());
 
             if (!taskGroupKey.equals(currentGroupKey)) {
-                // Bắt đầu nhóm mới
                 currentGroupKey = taskGroupKey;
                 String title = getGroupTitleFromKey(taskGroupKey);
-                // Lấy trạng thái (mặc định là mở)
                 boolean isExpanded = groupExpansionState.getOrDefault(title, true);
-
                 displayList.add(new DateHeader(title, isExpanded));
             }
 
-            // ⭐️ YÊU CẦU 3: Chỉ thêm task nếu nhóm đang MỞ
             if (groupExpansionState.getOrDefault(getGroupTitleFromKey(taskGroupKey), true)) {
                 displayList.add(task);
             }
@@ -418,7 +419,7 @@ public class MainActivity extends AppCompatActivity {
                     showLoading(false);
                     allTasks.clear();
                     if (tasks != null) allTasks.addAll(tasks);
-                    updateGroupedList(); // ⬅️ Gọi hàm update mới
+                    updateGroupedList();
                 })
                 .addOnFailureListener(e -> {
                     showLoading(false);
@@ -426,13 +427,19 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    // 🔽 CHỈNH SỬA HÀM NÀY 🔽
     private void deleteTaskFromFirebase(Task task, int position) {
         showLoading(true);
+
+        // 🔽 THÊM LOGIC HỦY LỊCH 🔽
+        NotificationScheduler.cancelNotification(getApplicationContext(), task.getTaskId());
+        // 🔼 KẾT THÚC LOGIC HỦY LỊCH 🔼
+
         taskRepository.deleteTask(task.getTaskId())
                 .addOnSuccessListener(aVoid -> {
                     showLoading(false);
                     allTasks.remove(task);
-                    updateGroupedList(); // ⬅️ Gọi hàm update mới
+                    updateGroupedList();
                     Toast.makeText(this, "Đã xóa task", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
@@ -441,6 +448,8 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "Lỗi xóa task: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
+    // 🔼 KẾT THÚC CHỈNH SỬA 🔼
+
 
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
@@ -451,5 +460,40 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(MainActivity.this, AddTaskActivity.class));
     }
 
+
+    // 🔽 THÊM CÁC HÀM MỚI SAU VÀO CUỐI CLASS 🔽
+
+    /**
+     * Yêu cầu quyền POST_NOTIFICATIONS nếu chạy trên Android 13 (API 33) trở lên.
+     */
+    private void requestNotificationPermission() {
+        // Chỉ yêu cầu trên Android 13 (API 33 - TIRAMISU) trở lên
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+                    PackageManager.PERMISSION_GRANTED) {
+
+                // Yêu cầu quyền
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_CODE);
+            }
+        }
+    }
+
+    /**
+     * Xử lý kết quả trả về khi yêu cầu quyền.
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == NOTIFICATION_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Đã cấp quyền thông báo!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Bạn đã từ chối quyền thông báo. Một số tính năng có thể bị hạn chế.", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+    // 🔼 KẾT THÚC CÁC HÀM MỚI 🔼
 
 }
