@@ -77,6 +77,23 @@
             android:name=".NotificationReceiver"
             android:enabled="true"
             android:exported="false" />
+        <receiver
+            android:name=".widget.TodayTasksWidgetProvider"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <!-- Thêm action tùy chỉnh để nhận broadcast -->
+                <action android:name="com.example.todoapp.WIDGET_DATA_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/today_tasks_widget_info" />
+        </receiver>
+
+        <!-- 2. Khai báo Service cho ListView của Widget -->
+        <service
+            android:name=".widget.WidgetRemoteViewsService"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
     </application>
 
 </manifest>

@@ -13,16 +13,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.HorizontalScrollView;
 
-import androidx.annotation.NonNull; // ⬅️ THÊM IMPORT
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat; // ⬅️ THÊM IMPORT
-import androidx.core.content.ContextCompat; // ⬅️ THÊM IMPORT
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import android.content.pm.PackageManager; // ⬅️ THÊM IMPORT
-import android.Manifest; // ⬅️ THÊM IMPORT
-import android.os.Build; // ⬅️ THÊM IMPORT
+import android.content.pm.PackageManager;
+import android.Manifest;
+import android.os.Build;
+
+// Import cho Widget
+import android.content.Context;
+import android.content.SharedPreferences;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.example.todoapp.adapter.TaskAdapter;
 import com.example.todoapp.Auth.LoginActivity;
@@ -67,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Map<String, Boolean> groupExpansionState = new HashMap<>();
 
-    // 🔽 THÊM HẰNG SỐ MỚI 🔽
+    // Hằng số cho Notification
     private static final int NOTIFICATION_PERMISSION_CODE = 101;
 
 
@@ -148,7 +154,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            // 🔽 CHỈNH SỬA HÀM NÀY 🔽
             @Override
             public void onTaskCheckChanged(int position, boolean isChecked) {
                 if (position < 0 || position >= displayList.size() || !(displayList.get(position) instanceof Task)) {
@@ -158,12 +163,10 @@ public class MainActivity extends AppCompatActivity {
                 Task task = (Task) displayList.get(position);
                 task.setCompleted(isChecked);
 
-                // 🔽 THÊM LOGIC ĐẶT/HỦY LỊCH 🔽
+                // Cập nhật lịch thông báo
                 if (isChecked) {
-                    // Nếu người dùng check hoàn thành, hủy thông báo
                     NotificationScheduler.cancelNotification(getApplicationContext(), task.getTaskId());
                 } else {
-                    // Nếu người dùng bỏ check, đặt lại thông báo (nếu còn hạn)
                     NotificationScheduler.scheduleNotification(
                             getApplicationContext(),
                             task.getDueDate(),
@@ -172,11 +175,14 @@ public class MainActivity extends AppCompatActivity {
                             "Công việc của bạn sắp đến hạn!"
                     );
                 }
-                // 🔼 KẾT THÚC LOGIC ĐẶT/HỦY LỊCH 🔼
 
                 taskRepository.updateTask(task)
                         .addOnSuccessListener(aVoid -> {
                             updateGroupedList();
+
+                            // Cập nhật Widget
+                            saveTasksForWidget(allTasks);
+                            notifyWidgetDataChanged();
                         })
                         .addOnFailureListener(e -> {
                             task.setCompleted(!isChecked);
@@ -184,8 +190,6 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "Lỗi cập nhật", Toast.LENGTH_SHORT).show();
                         });
             }
-            // 🔼 KẾT THÚC CHỈNH SỬA 🔼
-
 
             @Override
             public void onHeaderClick(int position) {
@@ -207,9 +211,8 @@ public class MainActivity extends AppCompatActivity {
         loadCategoriesAndTasks();
         firebaseAuth = new FirebaseAuthRepository();
 
-        // 🔽 THÊM HÀM GỌI YÊU CẦU QUYỀN 🔽
+        // Yêu cầu quyền thông báo
         requestNotificationPermission();
-        // 🔼 KẾT THÚC THÊM HÀM GỌI 🔼
     }
 
     @Override
@@ -419,7 +422,12 @@ public class MainActivity extends AppCompatActivity {
                     showLoading(false);
                     allTasks.clear();
                     if (tasks != null) allTasks.addAll(tasks);
-                    updateGroupedList();
+                    updateGroupedList(); // Cập nhật RecyclerView
+
+                    // Cập nhật Widget
+                    saveTasksForWidget(allTasks);
+                    notifyWidgetDataChanged();
+
                 })
                 .addOnFailureListener(e -> {
                     showLoading(false);
@@ -427,13 +435,11 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    // 🔽 CHỈNH SỬA HÀM NÀY 🔽
     private void deleteTaskFromFirebase(Task task, int position) {
         showLoading(true);
 
-        // 🔽 THÊM LOGIC HỦY LỊCH 🔽
+        // Hủy lịch
         NotificationScheduler.cancelNotification(getApplicationContext(), task.getTaskId());
-        // 🔼 KẾT THÚC LOGIC HỦY LỊCH 🔼
 
         taskRepository.deleteTask(task.getTaskId())
                 .addOnSuccessListener(aVoid -> {
@@ -441,6 +447,10 @@ public class MainActivity extends AppCompatActivity {
                     allTasks.remove(task);
                     updateGroupedList();
                     Toast.makeText(this, "Đã xóa task", Toast.LENGTH_SHORT).show();
+
+                    // Cập nhật Widget
+                    saveTasksForWidget(allTasks);
+                    notifyWidgetDataChanged();
                 })
                 .addOnFailureListener(e -> {
                     showLoading(false);
@@ -448,7 +458,6 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "Lỗi xóa task: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
-    // 🔼 KẾT THÚC CHỈNH SỬA 🔼
 
 
     private void showLoading(boolean show) {
@@ -460,8 +469,6 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(MainActivity.this, AddTaskActivity.class));
     }
 
-
-    // 🔽 THÊM CÁC HÀM MỚI SAU VÀO CUỐI CLASS 🔽
 
     /**
      * Yêu cầu quyền POST_NOTIFICATIONS nếu chạy trên Android 13 (API 33) trở lên.
@@ -494,6 +501,50 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-    // 🔼 KẾT THÚC CÁC HÀM MỚI 🔼
 
+    /**
+     * Kiểm tra xem một thời gian (milliseconds) có phải là hôm nay không
+     */
+    private boolean isToday(long milliseconds) {
+        if (milliseconds == 0) return false;
+
+        Calendar taskDate = Calendar.getInstance();
+        taskDate.setTimeInMillis(milliseconds);
+
+        Calendar now = Calendar.getInstance();
+
+        return now.get(Calendar.YEAR) == taskDate.get(Calendar.YEAR) &&
+                now.get(Calendar.DAY_OF_YEAR) == taskDate.get(Calendar.DAY_OF_YEAR);
+    }
+
+    /**
+     * Lưu danh sách các task HÔM NAY và CHƯA HOÀN THÀNH vào SharedPreferences.
+     */
+    private void saveTasksForWidget(List<Task> tasks) {
+        SharedPreferences prefs = getSharedPreferences(com.example.todoapp.widget.WidgetRemoteViewsFactory.PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        Set<String> todayTasksSet = new HashSet<>();
+        if (tasks != null) {
+            for (Task task : tasks) {
+                // Chỉ thêm task hôm nay VÀ chưa hoàn thành
+                if (isToday(task.getDueDate()) && !task.isCompleted()) {
+                    todayTasksSet.add(task.getTitle()); // Chỉ lưu tiêu đề cho đơn giản
+                }
+            }
+        }
+
+        editor.putStringSet(com.example.todoapp.widget.WidgetRemoteViewsFactory.PREFS_KEY_TASKS, todayTasksSet);
+        editor.apply();
+    }
+
+    /**
+     * Gửi broadcast để thông báo cho Widget Provider biết dữ liệu đã thay đổi.
+     */
+    private void notifyWidgetDataChanged() {
+        Intent intent = new Intent(this, com.example.todoapp.widget.TodayTasksWidgetProvider.class);
+        intent.setAction(com.example.todoapp.widget.TodayTasksWidgetProvider.WIDGET_DATA_CHANGED);
+        sendBroadcast(intent);
+    }
 }
+

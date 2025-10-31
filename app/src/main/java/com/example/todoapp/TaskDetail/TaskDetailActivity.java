@@ -383,11 +383,11 @@ public class TaskDetailActivity extends AppCompatActivity {
         tv.setText(sdf.format(calendar.getTime()));
     }
 
-    // 🔽 CHỈNH SỬA HÀM NÀY 🔽
     private void updateFullTaskInFirestore(String newTitle, String newDescription,
                                            String newPriority, String newCategoryId,
                                            long newDueDate, boolean newCompleted,
                                            List<String> newSubtasks, List<String> newNotes) {
+
         if (taskId == null || taskId.isEmpty()) {
             Toast.makeText(this, "Lỗi: Không tìm thấy ID nhiệm vụ", Toast.LENGTH_SHORT).show();
             return;
@@ -428,7 +428,7 @@ public class TaskDetailActivity extends AppCompatActivity {
             return;
         }
 
-        // 🔽 THÊM LOGIC CẬP NHẬT LỊCH 🔽
+        // Cập nhật lịch thông báo
         // 1. Hủy lịch cũ (luôn luôn hủy cho chắc)
         NotificationScheduler.cancelNotification(getApplicationContext(), taskId);
 
@@ -441,10 +441,9 @@ public class TaskDetailActivity extends AppCompatActivity {
                     newDueDate,
                     taskId,
                     newTitle,
-                    "Công việc đã đến hạn , hãy hoàn thành!!"
+                    "Công việc đã được cập nhật!"
             );
         }
-        // 🔼 KẾT THÚC LOGIC CẬP NHẬT LỊCH 🔼
 
         db.collection("tasks").document(taskId)
                 .update(updates)
@@ -479,6 +478,9 @@ public class TaskDetailActivity extends AppCompatActivity {
                     }
 
                     Toast.makeText(this, "Đã cập nhật nhiệm vụ", Toast.LENGTH_SHORT).show();
+
+                    // Thông báo cho Widget
+                    notifyWidgetDataChanged();
                 })
                 .addOnFailureListener(e -> {
                     Log.e("TaskDetailActivity", "Error updating task", e);
@@ -537,21 +539,23 @@ public class TaskDetailActivity extends AppCompatActivity {
                 .show();
     }
 
-    // 🔽 CHỈNH SỬA HÀM NÀY 🔽
     private void deleteTask() {
         if (taskId == null || taskId.isEmpty()) {
             Toast.makeText(this, "Lỗi: Không tìm thấy ID nhiệm vụ", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // 🔽 THÊM LOGIC HỦY LỊCH 🔽
+        // Hủy lịch
         NotificationScheduler.cancelNotification(getApplicationContext(), taskId);
-        // 🔼 KẾT THÚC LOGIC HỦY LỊCH 🔼
 
         db.collection("tasks").document(taskId)
                 .delete()
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "Đã xóa nhiệm vụ", Toast.LENGTH_SHORT).show();
+
+                    // Thông báo cho Widget
+                    notifyWidgetDataChanged();
+
                     finish();
                 })
                 .addOnFailureListener(e -> {
@@ -560,7 +564,6 @@ public class TaskDetailActivity extends AppCompatActivity {
                             Toast.LENGTH_SHORT).show();
                 });
     }
-    // 🔼 KẾT THÚC CHỈNH SỬA 🔼
 
 
     private void fetchCategoryName(String categoryId) {
@@ -601,11 +604,9 @@ public class TaskDetailActivity extends AppCompatActivity {
         chipPriority.setText(getPriorityText(priority));
         setPriorityColor(chipPriority, priority);
 
-        // 🔽 Sửa logic status 🔽
-        String status = completed ? "completed" : "pending"; // Chỉ 2 trạng thái
+        String status = completed ? "completed" : "pending";
         chipStatus.setText(getStatusText(status));
         setStatusColor(chipStatus, status);
-        // 🔼 KẾT THÚC SỬA 🔼
 
         subtaskList.clear();
         if (subtasks != null && !subtasks.isEmpty()) {
@@ -635,7 +636,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         switch (status) {
             case "pending":
                 return "Đang chờ";
-            case "in_progress": // Giữ lại phòng trường hợp dữ liệu cũ
+            case "in_progress":
                 return "Đang thực hiện";
             case "completed":
                 return "Hoàn thành";
@@ -716,13 +717,11 @@ public class TaskDetailActivity extends AppCompatActivity {
             String subtask = subtasks.get(position);
             holder.cbSubtask.setText(subtask);
 
-            // Nếu là text "Không có công việc con" thì disable checkbox
             if (subtask.equals("Không có công việc con")) {
                 holder.cbSubtask.setEnabled(false);
                 holder.cbSubtask.setChecked(false);
             } else {
                 holder.cbSubtask.setEnabled(true);
-                // (Bạn có thể thêm logic lưu trạng thái check của subtask nếu muốn)
             }
         }
 
@@ -739,4 +738,14 @@ public class TaskDetailActivity extends AppCompatActivity {
             }
         }
     }
+
+    /**
+     * Gửi broadcast để thông báo cho Widget Provider biết dữ liệu đã thay đổi.
+     */
+    private void notifyWidgetDataChanged() {
+        Intent intent = new Intent(this, com.example.todoapp.widget.TodayTasksWidgetProvider.class);
+        intent.setAction(com.example.todoapp.widget.TodayTasksWidgetProvider.WIDGET_DATA_CHANGED);
+        sendBroadcast(intent);
+    }
 }
+
