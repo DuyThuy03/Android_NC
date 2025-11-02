@@ -15,13 +15,14 @@ public class Task {
     private List<String> notes;
     private long createdAt;
     private long updatedAt;
+    private List<String> members;
 
     // Constructors
     public Task() {
         // Default constructor
     }
 
-    public Task(String taskId, String uid, String title, String description, long dueDate, String priority, String categoryId, boolean isCompleted, List<String> subtasks, List<String> notes, long createdAt, long updatedAt) {
+    public Task(String taskId, String uid, String title, String description, long dueDate, String priority, String categoryId, boolean isCompleted, List<String> subtasks, List<String> notes, long createdAt, long updatedAt,List<String> members) {
         this.taskId = taskId;
         this.uid = uid;
         this.title = title;
@@ -34,6 +35,7 @@ public class Task {
         this.notes = notes;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.members = members;
     }
 
     // Getters and Setters
@@ -131,5 +133,12 @@ public class Task {
 
     public void setUpdatedAt(long updatedAt) {
         this.updatedAt = updatedAt;
+    }
+    public List<String> getMembers() {
+        return members;
+    }
+
+    public void setMembers(List<String> members) {
+        this.members = members;
     }
 }

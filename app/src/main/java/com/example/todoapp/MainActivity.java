@@ -52,6 +52,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.firebase.firestore.ListenerRegistration;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private RecyclerView recyclerView;
@@ -89,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     // Hằng số cho Notification
     private static final int NOTIFICATION_PERMISSION_CODE = 101;
+    private ListenerRegistration taskListener;
 
 
     @Override
@@ -378,8 +380,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override
     protected void onResume() {
         super.onResume();
-        loadCategoriesAndTasks();
-    }
+        loadCategoriesAndTasks();    }
 
     private void setupSearchListener() {
         searchEditText.addTextChangedListener(new TextWatcher() {
@@ -416,8 +417,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     if (categories != null && !categories.isEmpty()) {
                         createCategoryChips(categories);
                     }
-                    loadTasksFromFirebase();
-                })
+                    loadTasksFromFirebase();                })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Lỗi tải categories: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     loadTasksFromFirebase();
@@ -560,37 +560,45 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
 
+    // 🔽 THAY THẾ TOÀN BỘ HÀM NÀY 🔽
     private void loadTasksFromFirebase() {
         showLoading(true);
 
-        com.google.android.gms.tasks.Task<List<Task>> taskQuery;
-
-        if (currentFilterType.equals("none")) {
-            taskQuery = taskRepository.getAllTasks();
-        } else if (currentFilterType.equals("category")) {
-            taskQuery = taskRepository.getTasksByCategory(currentFilterValue);
-        } else if (currentFilterType.equals("priority")) {
-            taskQuery = taskRepository.getTasksByPriority(currentFilterValue);
-        } else if (currentFilterType.equals("completion")) {
-            boolean isCompleted = currentFilterValue.equals("completed");
-            taskQuery = taskRepository.getTasksByCompletionStatus(isCompleted);
-        } else {
-            taskQuery = taskRepository.getAllTasks();
+        // 1. Hủy listener cũ nếu có (tránh gọi nhiều lần khi filter)
+        if (taskListener != null) {
+            taskListener.remove();
         }
 
-        taskQuery.addOnSuccessListener(tasks -> {
-                    showLoading(false);
+        // 2. Lấy UID
+        String uid = firebaseAuth.getCurrentUser() != null
+                ? firebaseAuth.getCurrentUser().getUid()
+                : "anonymous";
+
+        // 3. Gọi hàm listener mới từ repository
+        taskListener = taskRepository.getFilteredTasksListener(uid, currentFilterType, currentFilterValue,
+                (value, error) -> {
+
+                    showLoading(false); // Ẩn loading
+
+                    // Xử lý lỗi
+                    if (error != null) {
+                        android.util.Log.e("MainActivity", "Lỗi lắng nghe task: ", error);
+                        Toast.makeText(this, "Lỗi tải dữ liệu: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Xử lý dữ liệu thành công
                     allTasks.clear();
-                    if (tasks != null) allTasks.addAll(tasks);
+                    if (value != null) {
+                        allTasks.addAll(value.toObjects(Task.class));
+                    }
+
+                    // Cập nhật UI
                     updateGroupedList();
 
+                    // Cập nhật Widget
                     saveTasksForWidget(allTasks);
                     notifyWidgetDataChanged();
-
-                })
-                .addOnFailureListener(e -> {
-                    showLoading(false);
-                    Toast.makeText(this, "Lỗi tải dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -684,5 +692,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Intent intent = new Intent(this, com.example.todoapp.widget.TodayTasksWidgetProvider.class);
         intent.setAction(com.example.todoapp.widget.TodayTasksWidgetProvider.WIDGET_DATA_CHANGED);
         sendBroadcast(intent);
+    }
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (taskListener != null) {
+            taskListener.remove();
+            taskListener = null; // Đặt lại là null
+        }
     }
 }

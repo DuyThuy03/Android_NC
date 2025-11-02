@@ -207,7 +207,7 @@
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_list" />
+                    android:src="@drawable/ic_home" />
 
                 <ImageButton
                     android:id="@+id/nav_add"
@@ -225,13 +225,6 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/ic_calendar" />
 
-                <ImageButton
-                    android:id="@+id/nav_notification"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="16dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_notification" />
 
             </LinearLayout>
 

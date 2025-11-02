@@ -68,6 +68,15 @@
                 android:src="@android:drawable/ic_menu_share"
                 android:tint="#FFFFFF"
                 android:contentDescription="Chia sẻ" />
+            <ImageButton
+                android:id="@+id/btnInviteMember"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_add"
+                android:tint="#FFFFFF"
+                android:contentDescription="Mời thành viên" />
+
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>

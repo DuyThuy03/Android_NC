@@ -6,11 +6,16 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import com.example.todoapp.model.Task;
+
+import java.util.ArrayList;
 import java.util.List;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.QuerySnapshot;
 
 public class FirebaseTaskRepository {
     private final FirebaseFirestore db;
-    private final FirebaseAuth auth;
+    public final FirebaseAuth auth;
     private final String COLLECTION_NAME = "tasks";
 
     public FirebaseTaskRepository() {
@@ -18,9 +23,9 @@ public class FirebaseTaskRepository {
         auth = FirebaseAuth.getInstance();
     }
 
-    // 🔽 CHỈNH SỬA HÀM NÀY 🔽
+
     // 🔹 Thêm Task
-    public com.google.android.gms.tasks.Task<String> addTask(Task task) { // ⬅️ Sửa kiểu trả về thành Task<String>
+    public com.google.android.gms.tasks.Task<String> addTask(Task task) {
         if (task.getTaskId() == null || task.getTaskId().isEmpty()) {
             task.setTaskId(db.collection(COLLECTION_NAME).document().getId());
         }
@@ -30,20 +35,24 @@ public class FirebaseTaskRepository {
         task.setCreatedAt(System.currentTimeMillis());
         task.setUpdatedAt(System.currentTimeMillis());
 
-        final String taskId = task.getTaskId(); // ⬅️ Lưu lại ID
+        List<String> initialMembers = new ArrayList<>();
+        initialMembers.add(uid); // Tự động thêm người tạo vào danh sách
+        task.setMembers(initialMembers);
+
+        final String taskId = task.getTaskId();
 
         return db.collection(COLLECTION_NAME)
-                .document(taskId) // ⬅️ Dùng taskId ở đây
+                .document(taskId)
                 .set(task)
-                .continueWith(innerTask -> { // ⬅️ Thêm continueWith để trả về ID
+                .continueWith(innerTask -> {
                     if (innerTask.isSuccessful()) {
-                        return taskId; // ⬅️ Trả về ID
+                        return taskId;
                     } else {
                         throw innerTask.getException();
                     }
                 });
     }
-    // 🔼 KẾT THÚC CHỈNH SỬA 🔼
+
 
 
     // 🔹 Lấy toàn bộ Task của user
@@ -51,7 +60,7 @@ public class FirebaseTaskRepository {
         String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "anonymous";
 
         return db.collection(COLLECTION_NAME)
-                .whereEqualTo("uid", uid)
+                .whereArrayContains("members", uid)
                 .get()
                 .continueWith(task -> {
                     if (task.isSuccessful()) {
@@ -96,7 +105,7 @@ public class FirebaseTaskRepository {
         String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "anonymous";
 
         return db.collection(COLLECTION_NAME)
-                .whereEqualTo("uid", uid)
+                .whereArrayContains("members", uid)
                 .whereEqualTo("categoryId", categoryId)
                 .get()
                 .continueWith(task -> {
@@ -113,7 +122,7 @@ public class FirebaseTaskRepository {
         String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "anonymous";
 
         return db.collection(COLLECTION_NAME)
-                .whereEqualTo("uid", uid)
+                .whereArrayContains("members", uid)
                 .whereEqualTo("priority", priority)
                 .get()
                 .continueWith(task -> {
@@ -130,7 +139,7 @@ public class FirebaseTaskRepository {
         String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "anonymous";
 
         return db.collection(COLLECTION_NAME)
-                .whereEqualTo("uid", uid)
+                .whereArrayContains("members", uid)
                 .whereEqualTo("completed", isCompleted)
                 .get()
                 .continueWith(task -> {
@@ -140,6 +149,24 @@ public class FirebaseTaskRepository {
                         throw task.getException();
                     }
                 });
+    }
+    public com.google.firebase.firestore.ListenerRegistration getFilteredTasksListener(String uid, String filterType, String filterValue, EventListener<QuerySnapshot> listener) {
+
+        // Query cơ bản: Luôn lọc theo mảng 'members'
+        Query query = db.collection(COLLECTION_NAME).whereArrayContains("members", uid);
+
+        // Áp dụng các bộ lọc
+        if (filterType.equals("category")) {
+            query = query.whereEqualTo("categoryId", filterValue);
+        } else if (filterType.equals("priority")) {
+            query = query.whereEqualTo("priority", filterValue);
+        } else if (filterType.equals("completion")) {
+            boolean isCompleted = filterValue.equals("completed");
+            query = query.whereEqualTo("completed", isCompleted);
+        }
+
+        // Trả về listener để MainActivity có thể quản lý (remove khi stop)
+        return query.addSnapshotListener(listener);
     }
 
 }

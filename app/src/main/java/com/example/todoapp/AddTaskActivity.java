@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Arrays; //
 
 public class AddTaskActivity extends AppCompatActivity {
 
@@ -302,7 +303,8 @@ public class AddTaskActivity extends AppCompatActivity {
                 subtasks,
                 notes,
                 System.currentTimeMillis(),
-                System.currentTimeMillis()
+                System.currentTimeMillis(),
+                null
         );
 
         taskRepo.addTask(task)
