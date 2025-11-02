@@ -6,6 +6,10 @@
             android:id="@+id/nav_profile"
             android:icon="@drawable/ic_user"
             android:title="Thông tin cá nhân" />
+        <item
+            android:id="@+id/nav_statistics"
+            android:icon="@drawable/ic_statistics"
+            android:title="Thống kê" />
 
         <item
             android:id="@+id/nav_settings"

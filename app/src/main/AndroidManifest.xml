@@ -73,6 +73,10 @@
             </intent-filter>
         </activity>
         <activity android:name=".CalendarActivity" />
+        <activity
+            android:name=".StatisticsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
 
         <receiver
             android:name=".NotificationReceiver"

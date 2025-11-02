@@ -334,7 +334,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if (id == R.id.nav_profile) {
             Toast.makeText(this, "Thông tin cá nhân", Toast.LENGTH_SHORT).show();
-        } else if (id == R.id.nav_settings) {
+        }
+        else if (id == R.id.nav_statistics) {
+            Intent intent = new Intent(MainActivity.this, StatisticsActivity.class);
+            startActivity(intent);}
+        else if (id == R.id.nav_settings) {
             Toast.makeText(this, "Cài đặt", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_about) {
             Toast.makeText(this, "Về ứng dụng", Toast.LENGTH_SHORT).show();
