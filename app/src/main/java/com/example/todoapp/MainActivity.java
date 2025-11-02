@@ -4,9 +4,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -18,6 +20,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.content.pm.PackageManager;
@@ -38,6 +42,9 @@ import com.example.todoapp.Repository.FirebaseTaskRepository;
 import com.example.todoapp.model.Category;
 import com.example.todoapp.model.DateHeader;
 import com.example.todoapp.model.Task;
+import com.example.todoapp.model.User;
+import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -46,10 +53,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private RecyclerView recyclerView;
     private TaskAdapter adapter;
-
 
     private List<Object> displayList;
     private List<Task> allTasks;
@@ -58,6 +64,13 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private EditText searchEditText;
     private LinearLayout chipsContainer;
+
+    // Navigation Drawer - THÊM MỚI
+    private DrawerLayout drawerLayout;
+    private NavigationView navigationView;
+    private TextView navUsername, navEmail;
+    private ImageView navAvatarImage;
+    private FirebaseFirestore db;
 
     private TextView chipHighPriority, chipMediumPriority, chipLowPriority;
     private TextView chipCompleted, chipPending;
@@ -85,6 +98,14 @@ public class MainActivity extends AppCompatActivity {
 
         taskRepository = new FirebaseTaskRepository();
         categoryRepository = new FirebaseCategoryRepository();
+        firebaseAuth = new FirebaseAuthRepository();
+        db = FirebaseFirestore.getInstance();
+
+        // Kiểm tra user đã đăng nhập chưa - THÊM MỚI
+        if (firebaseAuth.getCurrentUser() == null) {
+            redirectToLogin();
+            return;
+        }
 
         recyclerView = findViewById(R.id.tasksRecyclerView);
         addTask = findViewById(R.id.nav_add);
@@ -93,11 +114,15 @@ public class MainActivity extends AppCompatActivity {
         btnClearSearch = findViewById(R.id.btnClearSearch);
         btncalendar = findViewById(R.id.nav_calendar);
 
+        // Setup Navigation Drawer - THÊM MỚI
+        drawerLayout = findViewById(R.id.drawerLayout);
+        navigationView = findViewById(R.id.navigationView);
+        setupNavigationDrawer();
+
         btncalendar.setOnClickListener(view -> {
             Intent intent = new Intent(MainActivity.this, CalendarActivity.class);
             startActivity(intent);
         });
-
 
         View searchBarLayout = findViewById(R.id.searchBarLayout);
         HorizontalScrollView horizontalScrollView = (HorizontalScrollView)
@@ -143,7 +168,6 @@ public class MainActivity extends AppCompatActivity {
                 if (displayList.get(position) instanceof Task) {
                     Task task = (Task) displayList.get(position);
                     Intent intent = new Intent(MainActivity.this, com.example.todoapp.TaskDetail.TaskDetailActivity.class);
-                    // (Giữ nguyên putExtra)
                     intent.putExtra("taskId", task.getTaskId());
                     intent.putExtra("title", task.getTitle());
                     intent.putExtra("description", task.getDescription());
@@ -171,7 +195,6 @@ public class MainActivity extends AppCompatActivity {
                 Task task = (Task) displayList.get(position);
                 task.setCompleted(isChecked);
 
-                // Cập nhật lịch thông báo
                 if (isChecked) {
                     NotificationScheduler.cancelNotification(getApplicationContext(), task.getTaskId());
                 } else {
@@ -187,14 +210,12 @@ public class MainActivity extends AppCompatActivity {
                 taskRepository.updateTask(task)
                         .addOnSuccessListener(aVoid -> {
                             updateGroupedList();
-
-                            // Cập nhật Widget
                             saveTasksForWidget(allTasks);
                             notifyWidgetDataChanged();
                         })
                         .addOnFailureListener(e -> {
                             task.setCompleted(!isChecked);
-                            adapter.notifyItemChanged(position); // Hoàn tác
+                            adapter.notifyItemChanged(position);
                             Toast.makeText(MainActivity.this, "Lỗi cập nhật", Toast.LENGTH_SHORT).show();
                         });
             }
@@ -216,11 +237,142 @@ public class MainActivity extends AppCompatActivity {
         setupStaticFilterChips();
 
         addTask.setOnClickListener(v -> openAddTask());
+
+        // Load user info - THÊM MỚI
+        loadUserInfo();
         loadCategoriesAndTasks();
-        firebaseAuth = new FirebaseAuthRepository();
 
         // Yêu cầu quyền thông báo
         requestNotificationPermission();
+    }
+
+    // THÊM MỚI - Setup Navigation Drawer
+    private void setupNavigationDrawer() {
+        navigationView.setNavigationItemSelectedListener(this);
+
+        // Lấy header view
+        View headerView = navigationView.getHeaderView(0);
+
+        // ✅ THÊM LOG ĐỂ KIỂM TRA
+        android.util.Log.d("DEBUG_NAV", "HeaderView: " + headerView);
+
+        navUsername = headerView.findViewById(R.id.navUsername);
+        navEmail = headerView.findViewById(R.id.navEmail);
+        navAvatarImage = headerView.findViewById(R.id.navAvatarImage);
+
+        // ✅ KIỂM TRA CÁC TEXTVIEW
+        android.util.Log.d("DEBUG_NAV", "navUsername: " + navUsername);
+        android.util.Log.d("DEBUG_NAV", "navEmail: " + navEmail);
+
+        if (navUsername == null) {
+            android.util.Log.e("DEBUG_NAV", "❌ navUsername is NULL!");
+        }
+        if (navEmail == null) {
+            android.util.Log.e("DEBUG_NAV", "❌ navEmail is NULL!");
+        }
+
+        // Setup menu button
+        ImageButton menuButton = findViewById(R.id.nav_menu);
+        menuButton.setOnClickListener(v -> {
+            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                drawerLayout.closeDrawer(GravityCompat.START);
+            } else {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
+    }
+
+    // THÊM MỚI - Load thông tin user
+    private void loadUserInfo() {
+        String uid = firebaseAuth.getCurrentUser() != null
+                ? firebaseAuth.getCurrentUser().getUid()
+                : null;
+
+        android.util.Log.d("DEBUG_USER", "Starting loadUserInfo, UID: " + uid);
+
+        if (uid != null) {
+            db.collection("users").document(uid).get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            String username = documentSnapshot.getString("username");
+                            String email = documentSnapshot.getString("email");
+
+                            android.util.Log.d("DEBUG_USER", "✅ Username from Firestore: [" + username + "]");
+                            android.util.Log.d("DEBUG_USER", "✅ Email from Firestore: [" + email + "]");
+
+                            // Kiểm tra TextView trước khi set
+                            android.util.Log.d("DEBUG_USER", "navUsername TextView: " + navUsername);
+                            android.util.Log.d("DEBUG_USER", "navEmail TextView: " + navEmail);
+
+                            if (navUsername != null) {
+                                navUsername.setText(username != null ? username : "User");
+                                android.util.Log.d("DEBUG_USER", "✅ Set username thành công!");
+                            } else {
+                                android.util.Log.e("DEBUG_USER", "❌ navUsername is NULL, cannot set text!");
+                            }
+
+                            if (navEmail != null) {
+                                navEmail.setText(email != null ? email : "");
+                                android.util.Log.d("DEBUG_USER", "✅ Set email thành công!");
+                            } else {
+                                android.util.Log.e("DEBUG_USER", "❌ navEmail is NULL, cannot set text!");
+                            }
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        android.util.Log.e("DEBUG_USER", "❌ Error: " + e.getMessage());
+                    });
+        }
+    }
+
+    // THÊM MỚI - Handle navigation menu clicks
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.nav_profile) {
+            Toast.makeText(this, "Thông tin cá nhân", Toast.LENGTH_SHORT).show();
+        } else if (id == R.id.nav_settings) {
+            Toast.makeText(this, "Cài đặt", Toast.LENGTH_SHORT).show();
+        } else if (id == R.id.nav_about) {
+            Toast.makeText(this, "Về ứng dụng", Toast.LENGTH_SHORT).show();
+        } else if (id == R.id.nav_logout) {
+            showLogoutDialog();
+        }
+
+        drawerLayout.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    // THÊM MỚI - Dialog đăng xuất
+    private void showLogoutDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Đăng xuất")
+                .setMessage("Bạn có chắc muốn đăng xuất?")
+                .setPositiveButton("Đăng xuất", (dialog, which) -> {
+                    firebaseAuth.logout();
+                    redirectToLogin();
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    // THÊM MỚI - Redirect to login
+    private void redirectToLogin() {
+        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    // THÊM MỚI - Handle back button
+    @Override
+    public void onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
     }
 
     @Override
@@ -430,9 +582,8 @@ public class MainActivity extends AppCompatActivity {
                     showLoading(false);
                     allTasks.clear();
                     if (tasks != null) allTasks.addAll(tasks);
-                    updateGroupedList(); // Cập nhật RecyclerView
+                    updateGroupedList();
 
-                    // Cập nhật Widget
                     saveTasksForWidget(allTasks);
                     notifyWidgetDataChanged();
 
@@ -446,7 +597,6 @@ public class MainActivity extends AppCompatActivity {
     private void deleteTaskFromFirebase(Task task, int position) {
         showLoading(true);
 
-        // Hủy lịch
         NotificationScheduler.cancelNotification(getApplicationContext(), task.getTaskId());
 
         taskRepository.deleteTask(task.getTaskId())
@@ -456,7 +606,6 @@ public class MainActivity extends AppCompatActivity {
                     updateGroupedList();
                     Toast.makeText(this, "Đã xóa task", Toast.LENGTH_SHORT).show();
 
-                    // Cập nhật Widget
                     saveTasksForWidget(allTasks);
                     notifyWidgetDataChanged();
                 })
@@ -478,16 +627,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /**
-     * Yêu cầu quyền POST_NOTIFICATIONS nếu chạy trên Android 13 (API 33) trở lên.
-     */
     private void requestNotificationPermission() {
-        // Chỉ yêu cầu trên Android 13 (API 33 - TIRAMISU) trở lên
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
                     PackageManager.PERMISSION_GRANTED) {
 
-                // Yêu cầu quyền
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.POST_NOTIFICATIONS},
                         NOTIFICATION_PERMISSION_CODE);
@@ -495,9 +639,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Xử lý kết quả trả về khi yêu cầu quyền.
-     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -510,9 +651,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Kiểm tra xem một thời gian (milliseconds) có phải là hôm nay không
-     */
     private boolean isToday(long milliseconds) {
         if (milliseconds == 0) return false;
 
@@ -525,9 +663,6 @@ public class MainActivity extends AppCompatActivity {
                 now.get(Calendar.DAY_OF_YEAR) == taskDate.get(Calendar.DAY_OF_YEAR);
     }
 
-    /**
-     * Lưu danh sách các task HÔM NAY và CHƯA HOÀN THÀNH vào SharedPreferences.
-     */
     private void saveTasksForWidget(List<Task> tasks) {
         SharedPreferences prefs = getSharedPreferences(com.example.todoapp.widget.WidgetRemoteViewsFactory.PREFS_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
@@ -535,9 +670,8 @@ public class MainActivity extends AppCompatActivity {
         Set<String> todayTasksSet = new HashSet<>();
         if (tasks != null) {
             for (Task task : tasks) {
-                // Chỉ thêm task hôm nay VÀ chưa hoàn thành
                 if (isToday(task.getDueDate()) && !task.isCompleted()) {
-                    todayTasksSet.add(task.getTitle()); // Chỉ lưu tiêu đề cho đơn giản
+                    todayTasksSet.add(task.getTitle());
                 }
             }
         }
@@ -546,13 +680,9 @@ public class MainActivity extends AppCompatActivity {
         editor.apply();
     }
 
-    /**
-     * Gửi broadcast để thông báo cho Widget Provider biết dữ liệu đã thay đổi.
-     */
     private void notifyWidgetDataChanged() {
         Intent intent = new Intent(this, com.example.todoapp.widget.TodayTasksWidgetProvider.class);
         intent.setAction(com.example.todoapp.widget.TodayTasksWidgetProvider.WIDGET_DATA_CHANGED);
         sendBroadcast(intent);
     }
 }
-
