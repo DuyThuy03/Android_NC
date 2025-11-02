@@ -50,10 +50,11 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private TaskAdapter adapter;
 
+
     private List<Object> displayList;
     private List<Task> allTasks;
 
-    private ImageButton addTask, btnClearSearch;
+    private ImageButton addTask, btnClearSearch, btncalendar;
     private ProgressBar progressBar;
     private EditText searchEditText;
     private LinearLayout chipsContainer;
@@ -90,6 +91,13 @@ public class MainActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         searchEditText = findViewById(R.id.searchEditText);
         btnClearSearch = findViewById(R.id.btnClearSearch);
+        btncalendar = findViewById(R.id.nav_calendar);
+
+        btncalendar.setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, CalendarActivity.class);
+            startActivity(intent);
+        });
+
 
         View searchBarLayout = findViewById(R.id.searchBarLayout);
         HorizontalScrollView horizontalScrollView = (HorizontalScrollView)
