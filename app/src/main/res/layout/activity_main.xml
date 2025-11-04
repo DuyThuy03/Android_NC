@@ -193,7 +193,7 @@
                     android:layout_height="48dp"
                     android:layout_marginHorizontal="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:tint="?attr/colorOnSurface"
+                    app:tint="?attr/colorOnSurface"
                     android:src="@drawable/ic_menu" />
 
                 <!-- Nút list -->
@@ -203,13 +203,13 @@
                     android:layout_height="48dp"
                     android:layout_marginHorizontal="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:tint="?attr/colorOnSurface"
+                    app:tint="?attr/colorOnSurface"
                     android:src="@drawable/ic_home" />
 
                 <!-- Nút add nổi bật -->
                 <FrameLayout
-                    android:layout_width="72dp"
-                    android:layout_height="72dp"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
                     android:layout_marginHorizontal="12dp"
                     android:elevation="10dp">
 
@@ -219,9 +219,8 @@
                         android:layout_height="match_parent"
                         android:backgroundTint="@color/primary_color"
                         android:background="@drawable/bg_fab_add"
-                        android:tint="@android:color/white"
-                        android:src="@drawable/ic_add"
-" />
+                        app:tint="@android:color/white"
+                        android:src="@drawable/ic_add"/>
                 </FrameLayout>
 
                 <!-- Nút calendar -->
@@ -231,7 +230,7 @@
                     android:layout_height="48dp"
                     android:layout_marginHorizontal="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:tint="?attr/colorOnSurface"
+                    app:tint="?attr/colorOnSurface"
                     android:src="@drawable/ic_calendar" />
 
             </LinearLayout>
