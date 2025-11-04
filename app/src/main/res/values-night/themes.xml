@@ -1,7 +1,38 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.ToDoApp" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    <!-- Theme Dark -->
+    <style name="Base.Theme.ToDoApp" parent="Theme.Material3.Dark.NoActionBar">
+
+        <!-- 🎨 Màu thương hiệu -->
+        <item name="colorPrimary">#64B5F6</item>
+        <item name="colorPrimaryVariant">#1565C0</item>
+        <item name="colorOnPrimary">@android:color/black</item>
+
+        <!-- Accent -->
+        <item name="colorSecondary">#FF8A80</item>
+        <item name="colorSecondaryVariant">#FF8A80</item>
+        <item name="colorOnSecondary">@android:color/black</item>
+
+        <!-- Thanh trạng thái / điều hướng -->
+        <item name="android:statusBarColor" tools:targetApi="l">#0D47A1</item>
+        <item name="android:navigationBarColor">#1E1E1E</item>
+
+        <!-- Nền & chữ -->
+        <item name="android:colorBackground">#121212</item>
+        <item name="colorSurface">#222222</item>
+        <item name="colorOnSurface">#E0E0E0</item>
+        <item name="android:textColor">#E0E0E0</item>
+
+        <!-- Điều khiển -->
+        <item name="colorControlActivated">#64B5F6</item>
+        <item name="colorAccent">#FF8A80</item>
+
+        <!-- Hint & icon -->
+        <item name="hintTextColor">#9E9E9E</item>
+        <item name="startIconTint">#90CAF9</item>
+
+        <!-- Button -->
+        <item name="materialButtonStyle">@style/CustomButton</item>
     </style>
+
+    <style name="Theme.ToDoApp" parent="Base.Theme.ToDoApp" />
 </resources>

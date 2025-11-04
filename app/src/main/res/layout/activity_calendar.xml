@@ -12,7 +12,7 @@
         android:id="@+id/toolbarCalendar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        android:background="@color/primary_color"
         app:title="Lịch Công Việc"
         app:titleTextColor="@color/white"
         app:navigationIcon="@drawable/ic_arrow_back" /> <CalendarView

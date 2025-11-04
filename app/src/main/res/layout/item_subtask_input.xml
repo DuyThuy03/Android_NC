@@ -20,7 +20,7 @@
         <View
             android:layout_width="4dp"
             android:layout_height="match_parent"
-            android:background="?attr/colorPrimary"
+            android:background="@color/primary_color"
             android:layout_marginEnd="12dp" />
 
         <!-- Subtask Title -->

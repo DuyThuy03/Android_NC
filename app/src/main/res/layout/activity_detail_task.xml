@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,7 +8,7 @@
     android:orientation="vertical"
     android:background="#F5F5F5">
 
-    <!-- Header với nút điều khiển -->
+    <!-- Header -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -19,7 +20,7 @@
             android:layout_height="56dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:background="#2196F3"
+            android:background="@color/primary_color"
             android:paddingStart="8dp"
             android:paddingEnd="8dp">
 
@@ -29,8 +30,8 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_revert"
-                android:tint="#FFFFFF"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="@android:color/white"
                 android:contentDescription="Quay lại" />
 
             <!-- Spacer -->
@@ -46,7 +47,7 @@
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_delete"
-                android:tint="#FFFFFF"
+                app:tint="@android:color/white"
                 android:contentDescription="Xóa nhiệm vụ" />
 
             <!-- Nút chỉnh sửa -->
@@ -56,7 +57,7 @@
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_edit"
-                android:tint="#FFFFFF"
+                app:tint="@android:color/white"
                 android:contentDescription="Chỉnh sửa" />
 
             <!-- Nút chia sẻ -->
@@ -66,22 +67,22 @@
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_share"
-                android:tint="#FFFFFF"
+                app:tint="@android:color/white"
                 android:contentDescription="Chia sẻ" />
+
+            <!-- Nút mời thành viên -->
             <ImageButton
                 android:id="@+id/btnInviteMember"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_add"
-                android:tint="#FFFFFF"
+                app:tint="@android:color/white"
                 android:contentDescription="Mời thành viên" />
-
-
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Nội dung chính (ScrollView) -->
+    <!-- Nội dung chính -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -107,16 +108,15 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <!-- Title -->
                     <TextView
                         android:id="@+id/tvTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
                         android:text="Hoàn thành báo cáo"
                         android:textColor="#212121"
                         android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="8dp" />
+                        android:textStyle="bold" />
 
                     <!-- Chips cho Priority và Status -->
                     <LinearLayout
@@ -267,13 +267,11 @@
                         android:gravity="top"
                         android:hint="Nhập ghi chú..."
                         android:background="@android:drawable/edit_text"
-                        android:padding="12dp"/>
+                        android:padding="12dp" />
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
         </LinearLayout>
-
     </ScrollView>
-
 </LinearLayout>

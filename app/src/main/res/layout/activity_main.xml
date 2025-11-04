@@ -163,72 +163,80 @@
             app:layout_constraintTop_toBottomOf="@id/searchBarLayout" />
 
         <!-- Bottom Section -->
+        <!-- 🌙 Thanh điều hướng dưới -->
         <LinearLayout
             android:id="@+id/bottomSection"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/white"
+            android:layout_height="80dp"
             android:orientation="vertical"
-            android:elevation="4dp"
+            android:background="?attr/colorSurface"
+            android:elevation="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="12dp"
+            android:clipToPadding="false"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp" />
-
             <LinearLayout
+                android:id="@+id/bottomNavContainer"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="horizontal" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="70dp"
-                android:background="@android:color/white"
-                android:elevation="8dp"
+                android:layout_height="match_parent"
                 android:gravity="center"
                 android:orientation="horizontal"
-                android:paddingVertical="10dp">
+                android:background="@drawable/bg_bottom_nav">
 
+                <!-- Nút menu -->
                 <ImageButton
                     android:id="@+id/nav_menu"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginEnd="16dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginHorizontal="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
+                    android:tint="?attr/colorOnSurface"
                     android:src="@drawable/ic_menu" />
 
+                <!-- Nút list -->
                 <ImageButton
                     android:id="@+id/nav_list"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginHorizontal="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
+                    android:tint="?attr/colorOnSurface"
                     android:src="@drawable/ic_home" />
 
-                <ImageButton
-                    android:id="@+id/nav_add"
-                    android:layout_width="48dp"
-                    android:layout_height="49dp"
-                    android:layout_marginHorizontal="20dp"
-                    android:background="@drawable/bg_circle"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_add" />
+                <!-- Nút add nổi bật -->
+                <FrameLayout
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:layout_marginHorizontal="12dp"
+                    android:elevation="10dp">
 
+                    <ImageButton
+                        android:id="@+id/nav_add"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:backgroundTint="@color/primary_color"
+                        android:background="@drawable/bg_fab_add"
+                        android:tint="@android:color/white"
+                        android:src="@drawable/ic_add"
+" />
+                </FrameLayout>
+
+                <!-- Nút calendar -->
                 <ImageButton
                     android:id="@+id/nav_calendar"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginHorizontal="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
+                    android:tint="?attr/colorOnSurface"
                     android:src="@drawable/ic_calendar" />
 
-
             </LinearLayout>
-
         </LinearLayout>
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

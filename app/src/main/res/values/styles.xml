@@ -1,43 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Base application theme -->
+    <!-- 🌟 Theme chính của ứng dụng -->
     <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Primary brand color -->
+
+        <!-- 🎨 Màu thương hiệu -->
         <item name="colorPrimary">@color/primary_color</item>
         <item name="colorPrimaryVariant">@color/primary_dark</item>
         <item name="colorOnPrimary">@android:color/white</item>
 
-        <!-- Secondary brand color -->
+        <!-- Accent / Secondary -->
         <item name="colorSecondary">@color/accent_color</item>
         <item name="colorSecondaryVariant">@color/accent_color</item>
-        <item name="colorOnSecondary">@android:color/black</item>
+        <item name="colorOnSecondary">@android:color/white</item>
 
-        <!-- Status bar color -->
-        <item name="android:statusBarColor" tools:targetApi="l">@color/primary_dark</item>
+        <!-- ✅ Fix status bar bị tím -->
+        <item name="android:statusBarColor" tools:targetApi="l">@color/primary_color</item>
+        <item name="android:navigationBarColor">@color/surface_color</item>
 
-        <!-- Background colors -->
-        <item name="android:colorBackground">@color/background_color</item>
+        <!-- Nền và text -->
+        <item name="android:colorBackground">@color/background_gray</item>
         <item name="colorSurface">@color/surface_color</item>
-        <item name="colorOnBackground">@color/primary_text</item>
         <item name="colorOnSurface">@color/primary_text</item>
+        <item name="android:textColor">@color/primary_text</item>
 
-        <!-- Error color -->
-        <item name="colorError">@color/error_color</item>
-        <item name="colorOnError">@android:color/white</item>
+        <!-- Checkbox, Switch, Progress,... -->
+        <item name="colorControlActivated">@color/primary_color</item>
+        <item name="colorAccent">@color/primary_color</item>
 
-        <!-- Enable window content transitions -->
+        <!-- TextInput hint và icon -->
+        <item name="hintTextColor">@color/secondary_text</item>
+        <item name="startIconTint">@color/primary_color</item>
+
+        <!-- Button mặc định -->
+        <item name="materialButtonStyle">@style/CustomButton</item>
+
+        <!-- Cho phép hiệu ứng chuyển -->
         <item name="android:windowContentTransitions">true</item>
     </style>
 
-    <!-- Fullscreen theme for splash screen -->
+    <!-- 🚀 Màn hình Splash -->
     <style name="SplashTheme" parent="AppTheme">
         <item name="android:windowBackground">@drawable/gradient_background</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
     </style>
 
-    <!-- Custom TextInputLayout style -->
+    <!-- 🧩 TextInputLayout viền màu chủ đạo -->
     <style name="CustomTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="boxStrokeColor">@color/primary_color</item>
         <item name="boxStrokeWidth">2dp</item>
@@ -45,7 +54,7 @@
         <item name="android:textColorHint">@color/secondary_text</item>
     </style>
 
-    <!-- Custom Button style -->
+    <!-- 🔘 Button mặc định -->
     <style name="CustomButton" parent="Widget.MaterialComponents.Button">
         <item name="backgroundTint">@color/primary_color</item>
         <item name="android:textColor">@android:color/white</item>
@@ -55,7 +64,7 @@
         <item name="android:textAllCaps">true</item>
     </style>
 
-    <!-- Facebook Button style -->
+    <!-- 🔵 Button Facebook -->
     <style name="FacebookButton" parent="Widget.MaterialComponents.Button">
         <item name="backgroundTint">@color/facebook_blue</item>
         <item name="android:textColor">@android:color/white</item>

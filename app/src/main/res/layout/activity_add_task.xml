@@ -4,41 +4,46 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5"> <com.google.android.material.appbar.AppBarLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+    android:background="#F5F5F5">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+    <!-- AppBar -->
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:title="Thêm Nhiệm Vụ Mới"
-        app:titleTextColor="@android:color/white"
-        />
-</com.google.android.material.appbar.AppBarLayout>
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/primary_color"
+            app:title="Thêm Nhiệm Vụ Mới"
+            app:titleTextColor="@android:color/white" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Scroll content -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingTop="16dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:clipToPadding="false"
+        android:padding="16dp"
         android:descendantFocusability="afterDescendants">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:dividerPadding="8dp"
+            android:showDividers="none">
 
+            <!-- Thông tin nhiệm vụ -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardCornerRadius="12dp"  app:cardElevation="4dp">
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -47,7 +52,7 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Thông tin nhiệm vụ"
                         android:textColor="#212121"
@@ -55,12 +60,13 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="16dp" />
 
+                    <!-- Tiêu đề -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilTitle"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
+                        android:layout_marginBottom="12dp"
                         app:errorEnabled="true">
 
                         <com.google.android.material.textfield.TextInputEditText
@@ -72,23 +78,26 @@
                             android:maxLines="1" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- Mô tả -->
+
+                    <!-- Danh mục -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilDescription"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
+                        android:layout_marginBottom="12dp"
                         app:errorEnabled="true">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etDescription"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:gravity="start|top"
                             android:hint="Mô tả *"
                             android:inputType="textMultiLine|textCapSentences"
-                            android:minLines="3"
                             android:maxLines="5"
-                            android:gravity="start|top" />
+                            android:minLines="3" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <LinearLayout
@@ -96,8 +105,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="8dp">
+                        android:layout_marginBottom="12dp">
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/tilCategory"
@@ -105,8 +113,8 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="wrap_content"
-                            android:hint="Danh mục"
-                            >
+                            android:hint="Danh mục">
+
                             <AutoCompleteTextView
                                 android:id="@+id/actCategory"
                                 android:layout_width="match_parent"
@@ -122,18 +130,20 @@
                             android:layout_width="wrap_content"
                             android:layout_height="match_parent"
                             android:background="?attr/selectableItemBackgroundBorderless"
-                            android:paddingStart="12dp"
-                            android:paddingEnd="4dp"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
                             android:contentDescription="Quản lý danh mục"
-                            android:src="@drawable/ic_add"  app:tint="?attr/colorPrimary" /> </LinearLayout>
+                            android:src="@drawable/ic_add"
+                            app:tint="@color/primary_color" />
+                    </LinearLayout>
 
+                    <!-- Mức độ ưu tiên -->
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Mức độ ưu tiên"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="16sp"
-                        android:layout_marginTop="8dp"
                         android:layout_marginBottom="8dp" />
 
                     <RadioGroup
@@ -142,19 +152,22 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginBottom="16dp">
+
                         <RadioButton
                             android:id="@+id/rbLow"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Thấp" />
+
                         <RadioButton
                             android:id="@+id/rbMedium"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Trung bình"
-                            android:checked="true" />
+                            android:checked="true"
+                            android:text="Trung bình" />
+
                         <RadioButton
                             android:id="@+id/rbHigh"
                             android:layout_width="0dp"
@@ -163,12 +176,13 @@
                             android:text="Cao" />
                     </RadioGroup>
 
+                    <!-- Trạng thái -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilStatus"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
+                        android:layout_marginBottom="12dp"
                         android:hint="Trạng thái">
 
                         <AutoCompleteTextView
@@ -178,27 +192,32 @@
                             android:inputType="none" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- Ngày giờ -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilDueDate"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Ngày hạn"
-                        app:startIconDrawable="@drawable/ic_calendar" app:startIconTint="?attr/colorPrimary"> <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etDueDate"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:clickable="true"
-                        android:focusable="false"
-                        android:focusableInTouchMode="false"
-                        android:inputType="none"
-                        android:hint="Chọn ngày và giờ" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                        app:startIconDrawable="@drawable/ic_calendar"
+                        app:startIconTint="@color/primary_color">
 
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etDueDate"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="false"
+                            android:focusableInTouchMode="false"
+                            android:inputType="none"
+                            android:hint="Chọn ngày và giờ"
+                            android:paddingStart="40dp"
+                            android:paddingLeft="40dp" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- Công việc con -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -213,13 +232,13 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Công việc con"
                         android:textColor="#212121"
                         android:textSize="18sp"
                         android:textStyle="bold"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginBottom="8dp" />
 
                     <TextView
                         android:id="@+id/tvEmptySubtasks"
@@ -236,30 +255,33 @@
                         android:id="@+id/rvSubtasks"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:nestedScrollingEnabled="false"
-                        android:visibility="visible" />
+                        android:nestedScrollingEnabled="false" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- Ghi chú -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                app:cardElevation="4dp"
+                android:layout_marginBottom="16dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
+
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Ghi chú"
                         android:textColor="#212121"
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
+
                     <EditText
                         android:id="@+id/note_input_box"
                         android:layout_width="match_parent"
@@ -269,42 +291,49 @@
                         android:minLines="3"
                         android:gravity="top|start"
                         android:scrollbars="vertical"
-
                         android:padding="12dp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-
+            <!-- Spacer -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="100dp" />
-
         </LinearLayout>
     </ScrollView>
 
+    <!-- FAB thêm công việc con -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddSubtask"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="88dp"  android:src="@drawable/ic_add" android:contentDescription="Thêm công việc con"
+        android:layout_marginBottom="88dp"
+        android:src="@drawable/ic_add"
+        android:contentDescription="Thêm công việc con"
         app:tint="@android:color/white"
-        app:backgroundTint="?attr/colorAccent" /> <LinearLayout
+        app:backgroundTint="@color/primary_color" />
+
+    <!-- Nút lưu và hủy -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:orientation="horizontal"
         android:padding="16dp"
-        android:background="@android:color/white" android:elevation="8dp"> <Button
-        android:id="@+id/btnCancel"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:layout_marginEnd="8dp"
-        android:text="Hủy"
-        android:textColor="?attr/colorPrimary" />
+        android:background="@android:color/white"
+        android:elevation="8dp">
+
+        <Button
+            android:id="@+id/btnCancel"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="Hủy"
+            android:textColor="@color/primary_color" />
 
         <Button
             android:id="@+id/btnSave"
@@ -312,9 +341,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
             android:text="Lưu nhiệm vụ" />
-
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
