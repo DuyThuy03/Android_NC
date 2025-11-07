@@ -3,6 +3,7 @@ package com.example.todoapp.Repository;
 
 
 import com.example.todoapp.model.User;
+import com.facebook.AccessToken;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.*;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -66,5 +67,10 @@ public class FirebaseAuthRepository {
     // 🔹 Gửi email khôi phục mật khẩu
     public Task<Void> resetPassword(String email) {
         return auth.sendPasswordResetEmail(email);
+    }
+
+    public Task<AuthResult> loginWithFacebook(AccessToken token) {
+        AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
+        return auth.signInWithCredential(credential);
     }
 }

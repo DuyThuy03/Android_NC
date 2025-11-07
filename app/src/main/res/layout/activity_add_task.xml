@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:background="#F8F9FA">
 
     <!-- AppBar -->
     <com.google.android.material.appbar.AppBarLayout
@@ -21,29 +21,27 @@
             app:titleTextColor="@android:color/white" />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Scroll content -->
+    <!-- Nội dung cuộn -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        android:clipToPadding="false"
         android:padding="16dp"
-        android:descendantFocusability="afterDescendants">
+        android:clipToPadding="false">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:dividerPadding="8dp"
-            android:showDividers="none">
+            android:dividerPadding="8dp">
 
             <!-- Thông tin nhiệm vụ -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                app:cardCornerRadius="14dp"
+                app:cardElevation="6dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -60,7 +58,6 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Tiêu đề -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilTitle"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -78,9 +75,6 @@
                             android:maxLines="1" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Mô tả -->
-
-                    <!-- Danh mục -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilDescription"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -93,13 +87,14 @@
                             android:id="@+id/etDescription"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:gravity="start|top"
+                            android:gravity="top|start"
                             android:hint="Mô tả *"
                             android:inputType="textMultiLine|textCapSentences"
                             android:maxLines="5"
                             android:minLines="3" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- Danh mục -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -113,7 +108,7 @@
                             android:layout_width="0dp"
                             android:layout_weight="1"
                             android:layout_height="wrap_content"
-                            android:hint="Danh mục">
+                            android:hint="Danh mục *">
 
                             <AutoCompleteTextView
                                 android:id="@+id/actCategory"
@@ -127,11 +122,10 @@
 
                         <ImageButton
                             android:id="@+id/btnManageCategory"
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_marginStart="8dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
-                            android:paddingStart="8dp"
-                            android:paddingEnd="8dp"
                             android:contentDescription="Quản lý danh mục"
                             android:src="@drawable/ic_add"
                             app:tint="@color/primary_color" />
@@ -142,7 +136,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Mức độ ưu tiên"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="#333333"
                         android:textSize="16sp"
                         android:layout_marginBottom="8dp" />
 
@@ -151,7 +145,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginBottom="16dp">
+                        android:layout_marginBottom="16dp"
+                        android:gravity="center">
 
                         <RadioButton
                             android:id="@+id/rbLow"
@@ -176,23 +171,6 @@
                             android:text="Cao" />
                     </RadioGroup>
 
-                    <!-- Trạng thái -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilStatus"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
-                        android:hint="Trạng thái">
-
-                        <AutoCompleteTextView
-                            android:id="@+id/actStatus"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="none" />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- Ngày giờ -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilDueDate"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -207,13 +185,8 @@
                             android:layout_height="wrap_content"
                             android:clickable="true"
                             android:focusable="false"
-                            android:focusableInTouchMode="false"
-                            android:inputType="none"
-                            android:hint="Chọn ngày và giờ"
-                            android:paddingStart="40dp"
-                            android:paddingLeft="40dp" />
+                            android:hint="Chọn ngày và giờ *" />
                     </com.google.android.material.textfield.TextInputLayout>
-
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -222,8 +195,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                app:cardCornerRadius="14dp"
+                app:cardElevation="6dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -244,7 +217,7 @@
                         android:id="@+id/tvEmptySubtasks"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Chưa có công việc con. Nhấn nút '+' để thêm."
+                        android:text="Chưa có công việc con. Nhấn '+' để thêm."
                         android:textColor="#9E9E9E"
                         android:textSize="14sp"
                         android:gravity="center"
@@ -263,9 +236,9 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="6dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -276,7 +249,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Ghi chú"
+                        android:text="Ghi chú (Tùy chọn)"
                         android:textColor="#212121"
                         android:textSize="18sp"
                         android:textStyle="bold"
@@ -286,7 +259,7 @@
                         android:id="@+id/note_input_box"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Nhập ghi chú chi tiết"
+                        android:hint="Nhập ghi chú chi tiết (không bắt buộc)"
                         android:inputType="textMultiLine"
                         android:minLines="3"
                         android:gravity="top|start"
@@ -295,14 +268,13 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Spacer -->
             <View
                 android:layout_width="match_parent"
-                android:layout_height="100dp" />
+                android:layout_height="80dp" />
         </LinearLayout>
     </ScrollView>
 
-    <!-- FAB thêm công việc con -->
+    <!-- FAB -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddSubtask"
         android:layout_width="wrap_content"
@@ -311,11 +283,11 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="88dp"
         android:src="@drawable/ic_add"
-        android:contentDescription="Thêm công việc con"
         app:tint="@android:color/white"
-        app:backgroundTint="@color/primary_color" />
+        app:backgroundTint="@color/primary_color"
+        android:contentDescription="Thêm công việc con" />
 
-    <!-- Nút lưu và hủy -->
+    <!-- Nút lưu/hủy -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

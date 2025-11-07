@@ -14,6 +14,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.HorizontalScrollView;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -24,11 +28,11 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import android.content.pm.PackageManager;
 import android.Manifest;
 import android.os.Build;
 
-// Import cho Widget
 import android.content.Context;
 import android.content.SharedPreferences;
 import java.util.HashSet;
@@ -66,7 +70,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private EditText searchEditText;
     private LinearLayout chipsContainer;
 
-    // Navigation Drawer - THÊM MỚI
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
     private TextView navUsername, navEmail;
@@ -74,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private FirebaseFirestore db;
 
     private TextView chipHighPriority, chipMediumPriority, chipLowPriority;
-    private TextView chipCompleted, chipPending;
+    private TextView chipCompleted, chipPending, chipAll;
     private TextView currentSelectedChip;
     private Map<String, TextView> categoryChipsMap;
 
@@ -88,10 +91,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private Map<String, Boolean> groupExpansionState = new HashMap<>();
 
-    // Hằng số cho Notification
     private static final int NOTIFICATION_PERMISSION_CODE = 101;
     private ListenerRegistration taskListener;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,7 +104,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         firebaseAuth = new FirebaseAuthRepository();
         db = FirebaseFirestore.getInstance();
 
-        // Kiểm tra user đã đăng nhập chưa - THÊM MỚI
         if (firebaseAuth.getCurrentUser() == null) {
             redirectToLogin();
             return;
@@ -116,7 +116,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         btnClearSearch = findViewById(R.id.btnClearSearch);
         btncalendar = findViewById(R.id.nav_calendar);
 
-        // Setup Navigation Drawer - THÊM MỚI
         drawerLayout = findViewById(R.id.drawerLayout);
         navigationView = findViewById(R.id.navigationView);
         setupNavigationDrawer();
@@ -131,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 ((LinearLayout) searchBarLayout).getChildAt(1);
         chipsContainer = (LinearLayout) horizontalScrollView.getChildAt(0);
 
+        chipAll = findViewById(R.id.All);
         chipHighPriority = findViewById(R.id.chipHighPriority);
         chipMediumPriority = findViewById(R.id.chipMediumPriority);
         chipLowPriority = findViewById(R.id.chipLowPriority);
@@ -148,12 +148,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             public void onTaskDelete(int position) {
                 if (displayList.get(position) instanceof Task) {
                     Task deletedTask = (Task) displayList.get(position);
-                    new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Xác nhận xóa")
-                            .setMessage("Bạn có chắc muốn xóa task: " + deletedTask.getTitle() + "?")
-                            .setPositiveButton("Xóa", (dialog, which) -> deleteTaskFromFirebase(deletedTask, position))
-                            .setNegativeButton("Hủy", (dialog, which) -> adapter.notifyItemChanged(position))
-                            .show();
+                    showDeleteConfirmation(deletedTask, position);
                 }
             }
 
@@ -235,34 +230,104 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         recyclerView.setAdapter(adapter);
 
+        // ⭐ THÊM SWIPE TO DELETE
+        setupSwipeToDelete();
+
         setupSearchListener();
         setupStaticFilterChips();
 
         addTask.setOnClickListener(v -> openAddTask());
 
-        // Load user info - THÊM MỚI
         loadUserInfo();
         loadCategoriesAndTasks();
 
-        // Yêu cầu quyền thông báo
         requestNotificationPermission();
     }
 
-    // THÊM MỚI - Setup Navigation Drawer
+    // ⭐ HÀM MỚI: Setup Swipe to Delete
+    private void setupSwipeToDelete() {
+        ItemTouchHelper.SimpleCallback swipeCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            private final ColorDrawable background = new ColorDrawable(Color.RED);
+            private final Drawable deleteIcon = ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_delete);
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder,
+                                  @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                if (displayList.get(position) instanceof Task) {
+                    Task task = (Task) displayList.get(position);
+                    showDeleteConfirmation(task, position);
+                }
+            }
+
+            @Override
+            public int getSwipeDirs(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                // Chỉ cho phép swipe với Task, không cho Header
+                int position = viewHolder.getAdapterPosition();
+                if (position >= 0 && position < displayList.size() && displayList.get(position) instanceof Task) {
+                    return super.getSwipeDirs(recyclerView, viewHolder);
+                }
+                return 0;
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
+                                    @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY,
+                                    int actionState, boolean isCurrentlyActive) {
+                View itemView = viewHolder.itemView;
+
+                if (dX < 0) {
+                    background.setBounds(itemView.getRight() + (int) dX, itemView.getTop(),
+                            itemView.getRight(), itemView.getBottom());
+                    background.draw(c);
+
+                    int deleteIconMargin = (itemView.getHeight() - deleteIcon.getIntrinsicHeight()) / 2;
+                    int deleteIconTop = itemView.getTop() + deleteIconMargin;
+                    int deleteIconBottom = deleteIconTop + deleteIcon.getIntrinsicHeight();
+                    int deleteIconLeft = itemView.getRight() - deleteIconMargin - deleteIcon.getIntrinsicWidth();
+                    int deleteIconRight = itemView.getRight() - deleteIconMargin;
+
+                    deleteIcon.setBounds(deleteIconLeft, deleteIconTop, deleteIconRight, deleteIconBottom);
+                    deleteIcon.draw(c);
+                }
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+            }
+        };
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeCallback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
+    }
+
+    private void showDeleteConfirmation(Task task, int position) {
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Xác nhận xóa")
+                .setMessage("Bạn có chắc muốn xóa task: " + task.getTitle() + "?")
+                .setPositiveButton("Xóa", (dialog, which) -> deleteTaskFromFirebase(task, position))
+                .setNegativeButton("Hủy", (dialog, which) -> {
+                    // Khôi phục lại item khi hủy
+                    adapter.notifyItemChanged(position);
+                })
+                .setOnCancelListener(dialog -> adapter.notifyItemChanged(position))
+                .show();
+    }
+
     private void setupNavigationDrawer() {
         navigationView.setNavigationItemSelectedListener(this);
 
-        // Lấy header view
         View headerView = navigationView.getHeaderView(0);
 
-        // ✅ THÊM LOG ĐỂ KIỂM TRA
         android.util.Log.d("DEBUG_NAV", "HeaderView: " + headerView);
 
         navUsername = headerView.findViewById(R.id.navUsername);
         navEmail = headerView.findViewById(R.id.navEmail);
         navAvatarImage = headerView.findViewById(R.id.navAvatarImage);
 
-        // ✅ KIỂM TRA CÁC TEXTVIEW
         android.util.Log.d("DEBUG_NAV", "navUsername: " + navUsername);
         android.util.Log.d("DEBUG_NAV", "navEmail: " + navEmail);
 
@@ -273,7 +338,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             android.util.Log.e("DEBUG_NAV", "❌ navEmail is NULL!");
         }
 
-        // Setup menu button
         ImageButton menuButton = findViewById(R.id.nav_menu);
         menuButton.setOnClickListener(v -> {
             if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -284,7 +348,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
     }
 
-    // THÊM MỚI - Load thông tin user
     private void loadUserInfo() {
         String uid = firebaseAuth.getCurrentUser() != null
                 ? firebaseAuth.getCurrentUser().getUid()
@@ -302,7 +365,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             android.util.Log.d("DEBUG_USER", "✅ Username from Firestore: [" + username + "]");
                             android.util.Log.d("DEBUG_USER", "✅ Email from Firestore: [" + email + "]");
 
-                            // Kiểm tra TextView trước khi set
                             android.util.Log.d("DEBUG_USER", "navUsername TextView: " + navUsername);
                             android.util.Log.d("DEBUG_USER", "navEmail TextView: " + navEmail);
 
@@ -327,7 +389,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    // THÊM MỚI - Handle navigation menu clicks
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
@@ -337,7 +398,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         else if (id == R.id.nav_statistics) {
             Intent intent = new Intent(MainActivity.this, StatisticsActivity.class);
-            startActivity(intent);}
+            startActivity(intent);
+        }
         else if (id == R.id.nav_settings) {
             Toast.makeText(this, "Cài đặt", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_about) {
@@ -350,7 +412,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
-    // THÊM MỚI - Dialog đăng xuất
     private void showLogoutDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("Đăng xuất")
@@ -363,7 +424,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 .show();
     }
 
-    // THÊM MỚI - Redirect to login
     private void redirectToLogin() {
         Intent intent = new Intent(MainActivity.this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -371,7 +431,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         finish();
     }
 
-    // THÊM MỚI - Handle back button
     @Override
     public void onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -384,7 +443,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override
     protected void onResume() {
         super.onResume();
-        loadCategoriesAndTasks();    }
+        loadCategoriesAndTasks();
+    }
 
     private void setupSearchListener() {
         searchEditText.addTextChangedListener(new TextWatcher() {
@@ -405,12 +465,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
     }
 
+    // ⭐ CẬP NHẬT: Thêm chip "All"
     private void setupStaticFilterChips() {
+        chipAll.setOnClickListener(v -> selectChip(chipAll, "none", ""));
         chipHighPriority.setOnClickListener(v -> selectChip(chipHighPriority, "priority", "high"));
         chipMediumPriority.setOnClickListener(v -> selectChip(chipMediumPriority, "priority", "medium"));
         chipLowPriority.setOnClickListener(v -> selectChip(chipLowPriority, "priority", "low"));
         chipCompleted.setOnClickListener(v -> selectChip(chipCompleted, "completion", "completed"));
         chipPending.setOnClickListener(v -> selectChip(chipPending, "completion", "pending"));
+
+        // Set "All" là selected mặc định
+        selectChip(chipAll, "none", "");
     }
 
     private void loadCategoriesAndTasks() {
@@ -421,23 +486,29 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     if (categories != null && !categories.isEmpty()) {
                         createCategoryChips(categories);
                     }
-                    loadTasksFromFirebase();                })
+                    loadTasksFromFirebase();
+                })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Lỗi tải categories: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     loadTasksFromFirebase();
                 });
     }
 
+    // ⭐ CẬP NHẬT: Category chips luôn thêm sau "All"
     private void createCategoryChips(List<Category> categories) {
+        // Xóa các category chips cũ (không xóa chips cố định)
         for (TextView chip : categoryChipsMap.values()) {
             chipsContainer.removeView(chip);
         }
         categoryChipsMap.clear();
 
+        // Thêm category chips sau vị trí của chipPending (chip cố định cuối cùng)
+        int insertIndex = chipsContainer.indexOfChild(chipPending) + 1;
+
         for (int i = 0; i < categories.size(); i++) {
             Category category = categories.get(i);
             TextView chip = createCategoryChip(category);
-            chipsContainer.addView(chip, i);
+            chipsContainer.addView(chip, insertIndex + i);
             categoryChipsMap.put(category.getCategoryId(), chip);
         }
     }
@@ -462,11 +533,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void selectChip(TextView chip, String filterType, String filterValue) {
         if (currentSelectedChip == chip) {
-            resetChipSelection(chip);
-            currentFilterType = "none";
-            currentFilterValue = "";
-            loadTasksFromFirebase();
-            return;
+            return; // Không deselect chip đang chọn
         }
         if (currentSelectedChip != null) {
             resetChipSelection(currentSelectedChip);
@@ -563,44 +630,35 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         adapter.notifyDataSetChanged();
     }
 
-
-    // 🔽 THAY THẾ TOÀN BỘ HÀM NÀY 🔽
     private void loadTasksFromFirebase() {
         showLoading(true);
 
-        // 1. Hủy listener cũ nếu có (tránh gọi nhiều lần khi filter)
         if (taskListener != null) {
             taskListener.remove();
         }
 
-        // 2. Lấy UID
         String uid = firebaseAuth.getCurrentUser() != null
                 ? firebaseAuth.getCurrentUser().getUid()
                 : "anonymous";
 
-        // 3. Gọi hàm listener mới từ repository
         taskListener = taskRepository.getFilteredTasksListener(uid, currentFilterType, currentFilterValue,
                 (value, error) -> {
 
-                    showLoading(false); // Ẩn loading
+                    showLoading(false);
 
-                    // Xử lý lỗi
                     if (error != null) {
                         android.util.Log.e("MainActivity", "Lỗi lắng nghe task: ", error);
                         Toast.makeText(this, "Lỗi tải dữ liệu: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    // Xử lý dữ liệu thành công
                     allTasks.clear();
                     if (value != null) {
                         allTasks.addAll(value.toObjects(Task.class));
                     }
 
-                    // Cập nhật UI
                     updateGroupedList();
 
-                    // Cập nhật Widget
                     saveTasksForWidget(allTasks);
                     notifyWidgetDataChanged();
                 });
@@ -628,7 +686,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 });
     }
 
-
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
@@ -637,7 +694,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void openAddTask() {
         startActivity(new Intent(MainActivity.this, AddTaskActivity.class));
     }
-
 
     private void requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -697,12 +753,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         intent.setAction(com.example.todoapp.widget.TodayTasksWidgetProvider.WIDGET_DATA_CHANGED);
         sendBroadcast(intent);
     }
+
     @Override
     protected void onStop() {
         super.onStop();
         if (taskListener != null) {
             taskListener.remove();
-            taskListener = null; // Đặt lại là null
+            taskListener = null;
         }
     }
 }

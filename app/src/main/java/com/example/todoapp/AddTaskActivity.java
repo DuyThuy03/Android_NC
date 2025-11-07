@@ -34,20 +34,20 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.OnFailureListener;
 
-import com.example.todoapp.NotificationScheduler; // Import cho Notification
+import com.example.todoapp.NotificationScheduler;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
-import java.util.Arrays; //
+import java.util.Arrays;
 
 public class AddTaskActivity extends AppCompatActivity {
 
-    private TextInputLayout tilTitle, tilDescription, tilDueDate, tilCategory, tilStatus;
-    private EditText etTitle, etDescription, etDueDate,etNote;
-    private AutoCompleteTextView actCategory, actStatus;
+    private TextInputLayout tilTitle, tilDescription, tilDueDate, tilCategory;
+    private EditText etTitle, etDescription, etDueDate, etNote;
+    private AutoCompleteTextView actCategory;
     private RadioGroup rgPriority;
     private RecyclerView rvSubtasks;
     private TextView tvEmptySubtasks;
@@ -60,7 +60,6 @@ public class AddTaskActivity extends AppCompatActivity {
     private SubtaskInputAdapter subtaskAdapter;
 
     private Calendar dueDateCalendar;
-    private String[] statuses = {"Pending", "Completed", "Overdue"};
     private List<Category> categoryList = new ArrayList<>();
     private FirebaseCategoryRepository categoryRepo;
     private FirebaseTaskRepository taskRepo;
@@ -77,7 +76,6 @@ public class AddTaskActivity extends AppCompatActivity {
         taskRepo = new FirebaseTaskRepository();
 
         loadCategoriesFromFirebase();
-        setupStatusDropdown();
         setupSubtasksRecyclerView();
         setupDatePicker();
         setupButtons();
@@ -88,13 +86,11 @@ public class AddTaskActivity extends AppCompatActivity {
         tilDescription = findViewById(R.id.tilDescription);
         tilDueDate = findViewById(R.id.tilDueDate);
         tilCategory = findViewById(R.id.tilCategory);
-        tilStatus = findViewById(R.id.tilStatus);
 
         etTitle = findViewById(R.id.etTitle);
         etDescription = findViewById(R.id.etDescription);
         etDueDate = findViewById(R.id.etDueDate);
         actCategory = findViewById(R.id.actCategory);
-        actStatus = findViewById(R.id.actStatus);
         rgPriority = findViewById(R.id.rgPriority);
         rvSubtasks = findViewById(R.id.rvSubtasks);
         tvEmptySubtasks = findViewById(R.id.tvEmptySubtasks);
@@ -119,7 +115,6 @@ public class AddTaskActivity extends AppCompatActivity {
                 .addOnSuccessListener(categories -> {
                     categoryList.clear();
 
-                    // Kiểm tra null hoặc rỗng
                     if (categories == null || categories.isEmpty()) {
                         List<String> emptyList = new ArrayList<>();
                         emptyList.add("Không có danh mục nào");
@@ -131,7 +126,6 @@ public class AddTaskActivity extends AppCompatActivity {
                         return;
                     }
 
-                    // Nếu có dữ liệu
                     categoryList.addAll(categories);
                     List<String> categoryNames = new ArrayList<>();
                     for (Category c : categories) {
@@ -147,14 +141,6 @@ public class AddTaskActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Lỗi tải danh mục: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
-    }
-
-
-    private void setupStatusDropdown() {
-        ArrayAdapter<String> statusAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_dropdown_item_1line, statuses);
-        actStatus.setAdapter(statusAdapter);
-        actStatus.setOnClickListener(v -> actStatus.showDropDown());
     }
 
     private void setupSubtasksRecyclerView() {
@@ -245,18 +231,18 @@ public class AddTaskActivity extends AppCompatActivity {
         String title = etTitle.getText().toString().trim();
         String desc = etDescription.getText().toString().trim();
         String catName = actCategory.getText().toString().trim();
-        String status = actStatus.getText().toString().trim();
-        String note = etNote.getText().toString().trim();
+        String note = etNote.getText().toString().trim(); // Không bắt buộc
 
+        // Kiểm tra các trường bắt buộc (không bao gồm note)
         if (title.isEmpty() || desc.isEmpty() || catName.isEmpty() ||
-                status.isEmpty() || etDueDate.getText().toString().isEmpty() || note.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
+                etDueDate.getText().toString().isEmpty()) {
+            Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin bắt buộc", Toast.LENGTH_SHORT).show();
             return;
         }
 
         long dueDate = dueDateCalendar.getTimeInMillis();
 
-        // (Kiểm tra thời gian, cho phép 1 phút đệm)
+        // Kiểm tra thời gian (cho phép 1 phút đệm)
         if (dueDate <= System.currentTimeMillis() - 60000) {
             Toast.makeText(this, "Vui lòng chọn ngày giờ ở tương lai", Toast.LENGTH_SHORT).show();
             return;
@@ -286,11 +272,13 @@ public class AddTaskActivity extends AppCompatActivity {
             subtasks.add(s.title);
         }
 
-        // Chuẩn bị notes
+        // Chuẩn bị notes - nếu rỗng thì để list rỗng
         List<String> notes = new ArrayList<>();
-        notes.add(note);
+        if (!note.isEmpty()) {
+            notes.add(note);
+        }
 
-        // Tạo Task
+        // Tạo Task với trạng thái mặc định là Pending (false = chưa hoàn thành)
         Task task = new Task(
                 null,
                 FirebaseAuth.getInstance().getCurrentUser().getUid(),
@@ -299,7 +287,7 @@ public class AddTaskActivity extends AppCompatActivity {
                 dueDate,
                 priority,
                 categoryId,
-                status.equalsIgnoreCase("Completed"),
+                false, // Mặc định là Pending (chưa hoàn thành)
                 subtasks,
                 notes,
                 System.currentTimeMillis(),
@@ -311,16 +299,14 @@ public class AddTaskActivity extends AppCompatActivity {
                 .addOnSuccessListener(taskId -> {
                     Toast.makeText(this, "Đã lưu nhiệm vụ", Toast.LENGTH_SHORT).show();
 
-                    // Đặt lịch thông báo nếu task chưa hoàn thành
-                    if (!task.isCompleted()) {
-                        NotificationScheduler.scheduleNotification(
-                                getApplicationContext(),
-                                dueDate,
-                                taskId,
-                                title,
-                                "Công việc của bạn sắp đến hạn!"
-                        );
-                    }
+                    // Đặt lịch thông báo (task mới luôn là pending nên luôn đặt thông báo)
+                    NotificationScheduler.scheduleNotification(
+                            getApplicationContext(),
+                            dueDate,
+                            taskId,
+                            title,
+                            "Công việc của bạn sắp đến hạn!"
+                    );
 
                     // Thông báo cho Widget
                     notifyWidgetDataChanged();
@@ -333,7 +319,6 @@ public class AddTaskActivity extends AppCompatActivity {
                 });
     }
 
-    // --- DIALOG QUẢN LÝ DANH MỤC ---
     private void showManageCategoryDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Quản lý danh mục");
@@ -345,7 +330,6 @@ public class AddTaskActivity extends AppCompatActivity {
         RecyclerView rv = view.findViewById(R.id.rvCategories);
         Button btnAdd = view.findViewById(R.id.btnAddCategory);
 
-        // ✅ Dùng trực tiếp categoryList thay vì copy
         CategoryAdapter adapter = new CategoryAdapter(categoryList, view);
         rv.setLayoutManager(new LinearLayoutManager(this));
         rv.setAdapter(adapter);
@@ -361,14 +345,11 @@ public class AddTaskActivity extends AppCompatActivity {
 
             categoryRepo.addCategory(newCat)
                     .addOnSuccessListener(categoryId -> {
-                        // ✅ ID đã được set trong repository rồi
-                        // Chỉ cần add vào list
                         categoryList.add(newCat);
                         adapter.notifyItemInserted(categoryList.size() - 1);
 
                         etNewCategory.setText("");
 
-                        // ✅ Cập nhật dropdown
                         updateCategoryDropdown();
 
                         Log.d("AddTask", "Category added with ID: " + categoryId);
@@ -379,9 +360,7 @@ public class AddTaskActivity extends AppCompatActivity {
                     });
         });
 
-        builder.setPositiveButton("Xong", (d, w) -> {
-            // ✅ Không cần load lại, đã cập nhật realtime
-        });
+        builder.setPositiveButton("Xong", (d, w) -> {});
         builder.setNegativeButton("Đóng", null);
         builder.show();
     }
@@ -398,7 +377,6 @@ public class AddTaskActivity extends AppCompatActivity {
         actCategory.setAdapter(categoryAdapter);
     }
 
-    // --- SUBTASK & ADAPTER ---
     private static class SubtaskInput {
         String title;
         boolean done;
@@ -469,10 +447,8 @@ public class AddTaskActivity extends AppCompatActivity {
             Category c = list.get(pos);
             h.tv.setText(c.getName());
 
-            // ✅ 1. Click để SỬA
             h.tv.setOnClickListener(v -> showEditCategoryDialog(c, pos));
 
-            // ✅ 2. Long click để XÓA
             h.tv.setOnLongClickListener(v -> {
                 new AlertDialog.Builder(AddTaskActivity.this)
                         .setTitle("Xóa danh mục?")
@@ -529,16 +505,13 @@ public class AddTaskActivity extends AppCompatActivity {
             }
         }
 
-        // ✅ Dialog chỉnh sửa danh mục
         private void showEditCategoryDialog(Category category, int position) {
             View dialogView = LayoutInflater.from(AddTaskActivity.this)
                     .inflate(R.layout.dialog_edit_category, null);
 
             EditText etName = dialogView.findViewById(R.id.etCategoryName);
 
-
             etName.setText(category.getName());
-
 
             new AlertDialog.Builder(AddTaskActivity.this)
                     .setTitle("Chỉnh sửa danh mục")
@@ -546,17 +519,13 @@ public class AddTaskActivity extends AppCompatActivity {
                     .setPositiveButton("Lưu", (d, w) -> {
                         String newName = etName.getText().toString().trim();
 
-
                         if (newName.isEmpty()) {
                             Toast.makeText(AddTaskActivity.this, "Tên không được để trống", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
-                        // Cập nhật model
                         category.setName(newName);
 
-
-                        // Gọi repo update
                         categoryRepo.updateCategory(category)
                                 .addOnSuccessListener(unused -> {
                                     list.set(position, category);
@@ -576,14 +545,9 @@ public class AddTaskActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Gửi broadcast để thông báo cho Widget Provider biết dữ liệu đã thay đổi.
-     */
     private void notifyWidgetDataChanged() {
-        // Phải chỉ định rõ class nhận là Provider
         Intent intent = new Intent(this, com.example.todoapp.widget.TodayTasksWidgetProvider.class);
         intent.setAction(com.example.todoapp.widget.TodayTasksWidgetProvider.WIDGET_DATA_CHANGED);
         sendBroadcast(intent);
     }
 }
-

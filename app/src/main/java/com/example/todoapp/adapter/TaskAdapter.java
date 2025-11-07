@@ -11,10 +11,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.core.content.ContextCompat; // ⬅️ Thêm import
+import androidx.core.content.ContextCompat;
 
 import com.example.todoapp.R;
-import com.example.todoapp.model.DateHeader; // ⬅️ Thêm import
+import com.example.todoapp.model.DateHeader;
 import com.example.todoapp.model.Task;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         void onTaskEdit(int position);
         void onTaskClick(int position);
         void onTaskCheckChanged(int position, boolean isChecked);
-        void onHeaderClick(int position); // ⬅️ THÊM HÀM MỚI
+        void onHeaderClick(int position);
     }
 
     public TaskAdapter(List<Object> displayList, OnTaskListener listener) {
@@ -42,7 +42,6 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public int getItemViewType(int position) {
-        // ⭐️ THAY ĐỔI: Kiểm tra bằng class DateHeader
         if (displayList.get(position) instanceof DateHeader) {
             return VIEW_TYPE_HEADER;
         } else {
@@ -67,20 +66,17 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder.getItemViewType() == VIEW_TYPE_HEADER) {
-            // --- ⭐️ Bind Header (LOGIC MỚI) ---
             HeaderViewHolder headerHolder = (HeaderViewHolder) holder;
             DateHeader header = (DateHeader) displayList.get(position);
 
             headerHolder.tvHeaderTitle.setText(header.title);
 
-            // Đặt icon mũi tên (lên/xuống)
             if (header.isExpanded) {
-                headerHolder.ivExpandIcon.setImageResource(R.drawable.ic_priority_high); // Mũi tên xuống
+                headerHolder.ivExpandIcon.setImageResource(R.drawable.ic_priority_high);
             } else {
-                headerHolder.ivExpandIcon.setImageResource(R.drawable.ic_priority_low); // Mũi tên lên
+                headerHolder.ivExpandIcon.setImageResource(R.drawable.ic_priority_low);
             }
 
-            // Thêm listener cho toàn bộ header
             holder.itemView.setOnClickListener(v -> {
                 int currentPosition = holder.getAdapterPosition();
                 if (currentPosition != RecyclerView.NO_POSITION && listener != null) {
@@ -89,7 +85,6 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             });
 
         } else {
-            // --- Bind Task ---
             TaskViewHolder taskHolder = (TaskViewHolder) holder;
             Task task = (Task) displayList.get(position);
 
@@ -99,15 +94,31 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             taskHolder.taskCheckbox.setOnCheckedChangeListener(null);
             taskHolder.taskCheckbox.setChecked(task.isCompleted());
 
-            // ⭐️ YÊU CẦU 1: Mờ đi và gạch ngang
+            // Kiểm tra task quá hạn
+            boolean isOverdue = !task.isCompleted() &&
+                    task.getDueDate() > 0 &&
+                    task.getDueDate() < System.currentTimeMillis();
+
+            // Set background màu đỏ nhạt cho task quá hạn
+            if (isOverdue) {
+                taskHolder.cardTask.setCardBackgroundColor(
+                        ContextCompat.getColor(holder.itemView.getContext(), android.R.color.holo_red_light)
+                );
+            } else {
+                taskHolder.cardTask.setCardBackgroundColor(
+                        ContextCompat.getColor(holder.itemView.getContext(), R.color.white)
+                );
+            }
+
+            // Mờ đi và gạch ngang task đã hoàn thành
             if (task.isCompleted()) {
                 taskHolder.taskTitle.setPaintFlags(taskHolder.taskTitle.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                 taskHolder.taskSubtitle.setPaintFlags(taskHolder.taskSubtitle.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-                taskHolder.cardTask.setAlpha(0.6f); // Mờ đi
+                taskHolder.cardTask.setAlpha(0.6f);
             } else {
                 taskHolder.taskTitle.setPaintFlags(taskHolder.taskTitle.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
                 taskHolder.taskSubtitle.setPaintFlags(taskHolder.taskSubtitle.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
-                taskHolder.cardTask.setAlpha(1.0f); // Rõ lại
+                taskHolder.cardTask.setAlpha(1.0f);
             }
 
             taskHolder.taskCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -123,10 +134,8 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     listener.onTaskClick(pos);
             });
 
-            // Ẩn icon category (cặp)
             taskHolder.iconCategory.setVisibility(View.GONE);
 
-            // Đặt màu cờ theo priority
             String priority = task.getPriority();
             if (priority != null) {
                 taskHolder.iconFlag.setVisibility(View.VISIBLE);
@@ -155,7 +164,6 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return displayList.size();
     }
 
-    // ViewHolder cho Task
     static class TaskViewHolder extends RecyclerView.ViewHolder {
         CardView cardTask;
         TextView taskTitle, taskSubtitle;
@@ -173,7 +181,6 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    // ViewHolder cho Header
     static class HeaderViewHolder extends RecyclerView.ViewHolder {
         TextView tvHeaderTitle;
         ImageView ivExpandIcon;
