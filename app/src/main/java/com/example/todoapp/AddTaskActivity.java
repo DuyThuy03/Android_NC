@@ -242,6 +242,9 @@ public class AddTaskActivity extends AppCompatActivity {
 
         long dueDate = dueDateCalendar.getTimeInMillis();
 
+        // 🔽 THÊM DÒNG NÀY 🔽
+        long triggerTime_5Hour = dueDate - (5 * 60 * 60 * 1000); // 5 giờ
+
         // Kiểm tra thời gian (cho phép 1 phút đệm)
         if (dueDate <= System.currentTimeMillis() - 60000) {
             Toast.makeText(this, "Vui lòng chọn ngày giờ ở tương lai", Toast.LENGTH_SHORT).show();
@@ -299,14 +302,30 @@ public class AddTaskActivity extends AppCompatActivity {
                 .addOnSuccessListener(taskId -> {
                     Toast.makeText(this, "Đã lưu nhiệm vụ", Toast.LENGTH_SHORT).show();
 
-                    // Đặt lịch thông báo (task mới luôn là pending nên luôn đặt thông báo)
+                    // 🔽 CẬP NHẬT LOGIC LÊN LỊCH 🔽
+
+                    // 1. Đặt lịch thông báo LÚC ĐẾN HẠN
                     NotificationScheduler.scheduleNotification(
                             getApplicationContext(),
-                            dueDate,
+                            dueDate, // Lịch 1: lúc đến hạn
                             taskId,
                             title,
-                            "Công việc của bạn sắp đến hạn!"
+                            "Công việc của bạn sắp đến hạn!",
+                            NotificationScheduler.SUFFIX_MAIN // ⬅️ Suffix 1
                     );
+
+                    // 2. Đặt lịch thông báo TRƯỚC 5 TIẾNG (nếu thời gian hợp lệ)
+                    if (triggerTime_5Hour > System.currentTimeMillis()) {
+                        NotificationScheduler.scheduleNotification(
+                                getApplicationContext(),
+                                triggerTime_5Hour, // Lịch 2: trước 5 tiếng
+                                taskId,
+                                title,
+                                "Công việc sẽ đến hạn sau 5 tiếng!",
+                                NotificationScheduler.SUFFIX_5_HOUR // ⬅️ Suffix 2
+                        );
+                    }
+                    // 🔼 KẾT THÚC CẬP NHẬT 🔼
 
                     // Thông báo cho Widget
                     notifyWidgetDataChanged();

@@ -272,19 +272,17 @@ public class TaskDetailActivity extends AppCompatActivity {
                 Toast.makeText(this, "Vui lòng nhập email hợp lệ", Toast.LENGTH_SHORT).show();
                 return;
             }
-            findUserByEmailAndShare(email);
+            findUserAndSendInvitation(email);
         });
         builder.setNegativeButton("Hủy", (dialog, which) -> dialog.cancel());
 
         builder.show();
     }
     // 🔼 KẾT THÚC HÀM MỚI 🔼
+    private void findUserAndSendInvitation(String email) {
+        String currentUserId = taskRepository.auth.getCurrentUser().getUid();
 
-    // 🔽 HÀM MỚI: TÌM USER BẰNG EMAIL VÀ THÊM VÀO MẢNG 'members' 🔽
-    private void findUserByEmailAndShare(String email) {
-        // (db đã được khởi tạo trong onCreate)
-
-        // 1. Tìm user trong collection 'users'
+        // 1. Tìm người dùng (invitee) bằng email
         db.collection("users")
                 .whereEqualTo("email", email)
                 .limit(1)
@@ -295,46 +293,59 @@ public class TaskDetailActivity extends AppCompatActivity {
                         return;
                     }
 
-                    // 2. Lấy uid của người dùng được mời
-                    String invitedUserUid = queryDocumentSnapshots.getDocuments().get(0).getId();
+                    String inviteeUid = queryDocumentSnapshots.getDocuments().get(0).getId();
 
-                    // (taskRepository đã được khởi tạo trong onCreate)
-                    String myUid = taskRepository.auth.getCurrentUser().getUid();
-
-                    if (invitedUserUid.equals(myUid)) {
-                        Toast.makeText(this, "Bạn không thể tự chia sẻ cho chính mình", Toast.LENGTH_SHORT).show();
+                    if (inviteeUid.equals(currentUserId)) {
+                        Toast.makeText(this, "Bạn không thể tự mời chính mình", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    // Kiểm tra xem họ đã là thành viên chưa (sử dụng local task object)
-                    if (currentTaskObject != null && currentTaskObject.getMembers() != null && currentTaskObject.getMembers().contains(invitedUserUid)) {
+                    // Kiểm tra xem họ đã là thành viên chưa
+                    if (currentTaskObject != null && currentTaskObject.getMembers() != null && currentTaskObject.getMembers().contains(inviteeUid)) {
                         Toast.makeText(this, "Người này đã là thành viên của task", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    // 3. Thêm uid của họ vào mảng 'members' của task
-                    // (taskId là biến toàn cục của class này)
-                    db.collection("tasks").document(taskId)
-                            .update("members", FieldValue.arrayUnion(invitedUserUid))
-                            .addOnSuccessListener(aVoid -> {
-                                Toast.makeText(this, "Đã chia sẻ task thành công!", Toast.LENGTH_SHORT).show();
-                                // Cập nhật local object để tránh mời lại
-                                if (currentTaskObject != null && currentTaskObject.getMembers() != null) {
-                                    currentTaskObject.getMembers().add(invitedUserUid);
-                                } else if (currentTaskObject != null) {
-                                    List<String> members = new ArrayList<>();
-                                    members.add(invitedUserUid);
-                                    currentTaskObject.setMembers(members);
+                    // 2. Lấy tên của người chia sẻ (sharer)
+                    db.collection("users").document(currentUserId).get()
+                            .addOnSuccessListener(userDoc -> {
+                                String sharerName = "Một người dùng";
+                                if (userDoc.exists() && userDoc.getString("username") != null) {
+                                    sharerName = userDoc.getString("username");
                                 }
+
+                                // 3. Tạo tài liệu "lời mời" trong collection "notifications"
+                                String notificationId = db.collection("notifications").document().getId();
+                                Map<String, Object> invitation = new HashMap<>();
+                                invitation.put("notificationId", notificationId);
+                                invitation.put("type", "task_invitation"); // ⬅️ Loại mới
+                                invitation.put("uid", inviteeUid); // ⬅️ Gửi cho ai
+                                invitation.put("sharerUid", currentUserId); // ⬅️ Ai là người gửi
+                                invitation.put("sharerName", sharerName); // ⬅️ Tên người gửi
+                                invitation.put("taskId", currentTaskObject.getTaskId());
+                                invitation.put("taskTitle", currentTaskObject.getTitle());
+                                invitation.put("status", "pending"); // ⬅️ Trạng thái
+                                invitation.put("isSent", false); // ⬅️ Trạng thái (đã xem/nhận chưa)
+                                invitation.put("timestamp", System.currentTimeMillis());
+
+                                db.collection("notifications").document(notificationId).set(invitation)
+                                        .addOnSuccessListener(aVoid -> {
+                                            Toast.makeText(TaskDetailActivity.this, "Đã gửi lời mời!", Toast.LENGTH_SHORT).show();
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Toast.makeText(TaskDetailActivity.this, "Lỗi khi gửi lời mời: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        });
+
                             })
                             .addOnFailureListener(e -> {
-                                Toast.makeText(this, "Lỗi khi chia sẻ: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, "Lỗi lấy tên người gửi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                             });
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Lỗi khi tìm người dùng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
+
     // 🔼 KẾT THÚC HÀM MỚI 🔼
 
     private void showFullEditDialog() {
@@ -521,7 +532,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         tv.setText(sdf.format(calendar.getTime()));
     }
 
-    // 🔽 CẬP NHẬT HÀM NÀY (để đảm bảo 'members' được giữ lại) 🔽
+    // 🔽 CẬP NHẬT HÀM NÀY (để đảm bảo 'members' được giữ lại và lên 2 lịch) 🔽
     private void updateFullTaskInFirestore(String newTitle, String newDescription,
                                            String newPriority, String newCategoryId,
                                            long newDueDate, boolean newCompleted,
@@ -534,60 +545,56 @@ public class TaskDetailActivity extends AppCompatActivity {
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("updatedAt", System.currentTimeMillis());
-
-        // 🔽 THÊM DÒNG NÀY ĐỂ ĐẢM BẢO 'members' LUÔN ĐƯỢC LƯU LẠI 🔽
-        updates.put("members", currentTaskObject.getMembers());
-        // 🔼 KẾT THÚC THÊM 🔼
+        updates.put("members", currentTaskObject.getMembers()); // Giữ lại members
 
         // (Kiểm tra từng field... giữ nguyên)
-        if (!newTitle.equals(currentTitle)) {
-            updates.put("title", newTitle);
-        }
-        if (!newDescription.equals(currentDescription)) {
-            updates.put("description", newDescription);
-        }
-        if (!newPriority.equals(currentPriority)) {
-            updates.put("priority", newPriority);
-        }
-        if (!newCategoryId.equals(currentCategoryId)) {
-            updates.put("categoryId", newCategoryId);
-        }
-        if (newDueDate != currentDueDate) {
-            updates.put("dueDate", newDueDate);
-        }
-        if (newCompleted != currentCompleted) {
-            updates.put("completed", newCompleted);
-        }
+        if (!newTitle.equals(currentTitle)) updates.put("title", newTitle);
+        if (!newDescription.equals(currentDescription)) updates.put("description", newDescription);
+        if (!newPriority.equals(currentPriority)) updates.put("priority", newPriority);
+        if (!newCategoryId.equals(currentCategoryId)) updates.put("categoryId", newCategoryId);
+        if (newDueDate != currentDueDate) updates.put("dueDate", newDueDate);
+        if (newCompleted != currentCompleted) updates.put("completed", newCompleted);
+        if (!newSubtasks.equals(currentSubtasks)) updates.put("subtasks", newSubtasks);
+        if (!newNotes.equals(currentNotes)) updates.put("notes", newNotes);
 
-        // So sánh 2 List
-        if (!newSubtasks.equals(currentSubtasks)) {
-            updates.put("subtasks", newSubtasks);
-        }
-        if (!newNotes.equals(currentNotes)) {
-            updates.put("notes", newNotes);
-        }
+        // (Không cần check size == 2 nữa)
 
-        // Nếu không có gì thay đổi (chỉ có updatedAt và members)
-        if (updates.size() == 2) {
-            // Kiểm tra xem members có thực sự thay đổi không (mặc dù logic invite đã xử lý)
-            if (currentTaskObject.getMembers().equals(currentTaskObject.getMembers())) { // Tạm thời
-                Toast.makeText(this, "Không có thay đổi nào", Toast.LENGTH_SHORT).show();
-                return;
+        // 🔽 CẬP NHẬT LOGIC THÔNG BÁO 🔽
+
+        // 1. Hủy CẢ HAI thông báo cũ
+        NotificationScheduler.cancelNotification(getApplicationContext(), taskId, NotificationScheduler.SUFFIX_MAIN);
+        NotificationScheduler.cancelNotification(getApplicationContext(), taskId, NotificationScheduler.SUFFIX_5_HOUR);
+
+        // 2. Tính thời gian trigger 5 tiếng
+        long triggerTime_5Hour = newDueDate - (5 * 60 * 60 * 1000);
+
+        // 3. Đặt lịch lại (nếu task chưa hoàn thành)
+        if (!newCompleted) {
+            // Đặt lịch lúc đến hạn (nếu hợp lệ)
+            if (newDueDate > System.currentTimeMillis()) {
+                NotificationScheduler.scheduleNotification(
+                        getApplicationContext(),
+                        newDueDate,
+                        taskId,
+                        newTitle,
+                        "Công việc đã đến hạn, hãy hoàn thành !!",
+                        NotificationScheduler.SUFFIX_MAIN // ⬅️ Suffix 1
+                );
+            }
+            // Đặt lịch trước 5 tiếng (nếu hợp lệ)
+            if (triggerTime_5Hour > System.currentTimeMillis()) {
+                NotificationScheduler.scheduleNotification(
+                        getApplicationContext(),
+                        triggerTime_5Hour,
+                        taskId,
+                        newTitle,
+                        "Công việc sẽ đến hạn sau 5 tiếng!",
+                        NotificationScheduler.SUFFIX_5_HOUR // ⬅️ Suffix 2
+                );
             }
         }
+        // 🔼 KẾT THÚC CẬP NHẬT 🔼
 
-
-        // (Cập nhật lịch thông báo... giữ nguyên)
-        NotificationScheduler.cancelNotification(getApplicationContext(), taskId);
-        if (!newCompleted && newDueDate > System.currentTimeMillis()) {
-            NotificationScheduler.scheduleNotification(
-                    getApplicationContext(),
-                    newDueDate,
-                    taskId,
-                    newTitle,
-                    "Công việc đã đến hạn, hãy hoàn thành !!"
-            );
-        }
 
         db.collection("tasks").document(taskId)
                 .update(updates) // Dùng update thay vì set để chỉ thay đổi các field
@@ -612,8 +619,6 @@ public class TaskDetailActivity extends AppCompatActivity {
                     currentTaskObject.setSubtasks(newSubtasks);
                     currentTaskObject.setNotes(newNotes);
                     currentTaskObject.setUpdatedAt(System.currentTimeMillis());
-                    // (members đã được cập nhật bởi hàm invite)
-
 
                     // Update UI
                     displayTaskDetail(newTitle, newDescription, newPriority,
@@ -636,8 +641,6 @@ public class TaskDetailActivity extends AppCompatActivity {
                     }
 
                     Toast.makeText(this, "Đã cập nhật nhiệm vụ", Toast.LENGTH_SHORT).show();
-
-                    // Thông báo cho Widget
                     notifyWidgetDataChanged();
                 })
                 .addOnFailureListener(e -> {
@@ -702,23 +705,22 @@ public class TaskDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    // 🔽 CẬP NHẬT HÀM NÀY (để hủy 2 lịch) 🔽
     private void deleteTask() {
         if (taskId == null || taskId.isEmpty()) {
             Toast.makeText(this, "Lỗi: Không tìm thấy ID nhiệm vụ", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Hủy lịch
-        NotificationScheduler.cancelNotification(getApplicationContext(), taskId);
+        // Hủy CẢ HAI lịch
+        NotificationScheduler.cancelNotification(getApplicationContext(), taskId, NotificationScheduler.SUFFIX_MAIN);
+        NotificationScheduler.cancelNotification(getApplicationContext(), taskId, NotificationScheduler.SUFFIX_5_HOUR);
 
         db.collection("tasks").document(taskId)
                 .delete()
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "Đã xóa nhiệm vụ", Toast.LENGTH_SHORT).show();
-
-                    // Thông báo cho Widget
                     notifyWidgetDataChanged();
-
                     finish();
                 })
                 .addOnFailureListener(e -> {

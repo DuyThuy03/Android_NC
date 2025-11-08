@@ -15,26 +15,38 @@ import android.widget.Toast;
  */
 public class NotificationScheduler {
 
+    // 🔽 THÊM CÁC HẰNG SỐ NÀY 🔽
+    /** Suffix cho thông báo chính (lúc đến hạn) */
+    public static final String SUFFIX_MAIN = "_main_due_time";
+    /** Suffix cho thông báo nhắc trước 5 tiếng */
+    public static final String SUFFIX_5_HOUR = "_5_hour_reminder";
+    // 🔼 KẾT THÚC THÊM 🔼
+
     /**
      * Đặt lịch thông báo
      * @param context Context
      * @param triggerTime Thời gian (milliseconds) mà thông báo sẽ reo
-     * @param taskId ID của task (dùng để tạo ID thông báo duy nhất)
+     * @param taskId ID của task
      * @param title Tiêu đề
      * @param message Nội dung
+     * @param idSuffix Suffix duy nhất cho loại thông báo (dùng SUFFIX_MAIN hoặc SUFFIX_5_HOUR)
      */
-    public static void scheduleNotification(Context context, long triggerTime, String taskId, String title, String message) {
+    // 🔽 CẬP NHẬT CHỮ KÝ HÀM (thêm idSuffix) 🔽
+    public static void scheduleNotification(Context context, long triggerTime, String taskId, String title, String message, String idSuffix) {
+        // 🔼 KẾT THÚC CẬP NHẬT 🔼
 
         // Chỉ đặt lịch nếu thời gian là ở tương lai
         if (triggerTime <= System.currentTimeMillis()) {
-            Log.w("Scheduler", "Không đặt lịch cho thời gian đã qua.");
+            Log.w("Scheduler", "Không đặt lịch cho thời gian đã qua: " + idSuffix);
             return;
         }
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
-        // Cần có ID duy nhất cho mỗi báo thức, dùng hashCode của taskId
-        int notificationId = taskId.hashCode();
+        // 🔽 CẬP NHẬT CÁCH TẠO ID (thêm idSuffix) 🔽
+        // Cần có ID duy nhất cho mỗi báo thức, kết hợp taskId và suffix
+        int notificationId = (taskId + idSuffix).hashCode();
+        // 🔼 KẾT THÚC CẬP NHẬT 🔼
 
         Intent intent = new Intent(context, NotificationReceiver.class);
         intent.putExtra("taskTitle", title);
@@ -72,7 +84,7 @@ public class NotificationScheduler {
                     triggerTime,
                     pendingIntent
             );
-            Log.d("Scheduler", "Đã đặt báo thức cho '" + title + "' (ID: " + notificationId + ") lúc " + triggerTime);
+            Log.d("Scheduler", "Đã đặt báo thức '" + idSuffix + "' cho '" + title + "' (ID: " + notificationId + ") lúc " + triggerTime);
         } catch (Exception e) {
             Log.e("Scheduler", "Lỗi đặt báo thức: " + e.getMessage());
         }
@@ -82,11 +94,16 @@ public class NotificationScheduler {
      * Hủy lịch thông báo
      * @param context Context
      * @param taskId ID của task (phải giống hệt lúc đặt lịch)
+     * @param idSuffix Suffix duy nhất cho loại thông báo (phải giống hệt lúc đặt)
      */
-    public static void cancelNotification(Context context, String taskId) {
+    // 🔽 CẬP NHẬT CHỮ KÝ HÀM (thêm idSuffix) 🔽
+    public static void cancelNotification(Context context, String taskId, String idSuffix) {
+        // 🔼 KẾT THÚC CẬP NHẬT 🔼
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
-        int notificationId = taskId.hashCode(); // ID phải TRÙNG KHỚP
+        // 🔽 CẬP NHẬT CÁCH TẠO ID (thêm idSuffix) 🔽
+        int notificationId = (taskId + idSuffix).hashCode(); // ID phải TRÙNG KHỚP
+        // 🔼 KẾT THÚC CẬP NHẬT 🔼
 
         Intent intent = new Intent(context, NotificationReceiver.class);
 
@@ -99,7 +116,7 @@ public class NotificationScheduler {
 
         if (alarmManager != null) {
             alarmManager.cancel(pendingIntent);
-            Log.d("Scheduler", "Đã hủy báo thức cho (ID: " + notificationId + ")");
+            Log.d("Scheduler", "Đã hủy báo thức '" + idSuffix + "' cho (ID: " + notificationId + ")");
         }
     }
 }
