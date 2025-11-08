@@ -18,7 +18,8 @@ public class StatisticsActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
     private ProgressBar progressBar;
-    private TextView tvTotalTasks, tvCompletedTasks, tvPendingTasks;
+    // 🔽 CẬP NHẬT DÒNG NÀY 🔽
+    private TextView tvTotalTasks, tvCompletedTasks, tvPendingTasks, tvSharedTasks;
     private TextView tvHighPriority, tvMediumPriority, tvLowPriority;
 
     private FirebaseTaskRepository taskRepository;
@@ -38,6 +39,10 @@ public class StatisticsActivity extends AppCompatActivity {
         tvMediumPriority = findViewById(R.id.tvMediumPriority);
         tvLowPriority = findViewById(R.id.tvLowPriority);
 
+        // 🔽 THÊM DÒNG NÀY 🔽
+        tvSharedTasks = findViewById(R.id.tvSharedTasks);
+        // 🔼 KẾT THÚC THÊM 🔼
+
         // Setup Toolbar
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
@@ -55,14 +60,14 @@ public class StatisticsActivity extends AppCompatActivity {
     private void loadStatistics() {
         progressBar.setVisibility(View.VISIBLE);
 
-        // Chúng ta sẽ dùng hàm getAllTasks (đã được cập nhật để lọc theo 'members')
+        // (Giả sử hàm getAllTasks() lấy tất cả task user là thành viên)
         taskRepository.getAllTasks()
                 .addOnSuccessListener(tasks -> {
                     progressBar.setVisibility(View.GONE);
                     if (tasks == null || tasks.isEmpty()) {
                         Toast.makeText(this, "Không có dữ liệu công việc", Toast.LENGTH_SHORT).show();
-                        // Hiển thị số 0
-                        displayStats(0, 0, 0, 0, 0, 0);
+                        // 🔽 CẬP NHẬT LỆNH GỌI HÀM 🔽
+                        displayStats(0, 0, 0, 0, 0, 0, 0);
                         return;
                     }
 
@@ -72,6 +77,9 @@ public class StatisticsActivity extends AppCompatActivity {
                     int high = 0;
                     int medium = 0;
                     int low = 0;
+                    // 🔽 THÊM BIẾN NÀY 🔽
+                    int shared = 0;
+                    // 🔼 KẾT THÚC THÊM 🔼
 
                     for (Task task : tasks) {
                         if (task.isCompleted()) {
@@ -92,12 +100,20 @@ public class StatisticsActivity extends AppCompatActivity {
                                     break;
                             }
                         }
+
+                        // 🔽 THÊM LOGIC ĐẾM NÀY 🔽
+                        // Task được chia sẻ nếu có nhiều hơn 1 thành viên
+                        if (task.getMembers() != null && task.getMembers().size() > 1) {
+                            shared++;
+                        }
+                        // 🔼 KẾT THÚC THÊM 🔼
                     }
 
                     int pending = total - completed;
 
                     // Hiển thị dữ liệu
-                    displayStats(total, completed, pending, high, medium, low);
+                    // 🔽 CẬP NHẬT LỆNH GỌI HÀM 🔽
+                    displayStats(total, completed, pending, high, medium, low, shared);
 
                 })
                 .addOnFailureListener(e -> {
@@ -106,10 +122,15 @@ public class StatisticsActivity extends AppCompatActivity {
                 });
     }
 
-    private void displayStats(int total, int completed, int pending, int high, int medium, int low) {
+    // 🔽 CẬP NHẬT CHỮ KÝ HÀM NÀY 🔽
+    private void displayStats(int total, int completed, int pending, int high, int medium, int low, int shared) {
         tvTotalTasks.setText("Tổng số công việc: " + total);
         tvCompletedTasks.setText("Đã hoàn thành: " + completed);
         tvPendingTasks.setText("Chưa hoàn thành: " + pending);
+
+        // 🔽 THÊM DÒNG NÀY 🔽
+        tvSharedTasks.setText("Đã chia sẻ: " + shared);
+        // 🔼 KẾT THÚC THÊM 🔼
 
         tvHighPriority.setText("🔴 Cao: " + high);
         tvMediumPriority.setText("🟡 Trung bình: " + medium);

@@ -83,8 +83,14 @@
                         android:layout_height="wrap_content"
                         android:text="Chưa hoàn thành: Đang tải..."
                         android:textSize="16sp"
-                        android:textColor="#F44336"/>
-                </LinearLayout>
+                        android:textColor="#F44336"
+                        android:layout_marginBottom="8dp"/> <TextView
+                    android:id="@+id/tvSharedTasks"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Đã chia sẻ: Đang tải..."
+                    android:textSize="16sp"
+                    android:textColor="#007BFF"/> </LinearLayout>
             </androidx.cardview.widget.CardView>
 
             <androidx.cardview.widget.CardView
