@@ -60,6 +60,9 @@ import java.util.List;
 import java.util.Map;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
+import com.example.todoapp.widget.TodayTasksWidgetProvider;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -347,6 +350,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         else if (id == R.id.nav_statistics) startActivity(new Intent(MainActivity.this, StatisticsActivity.class));
         else if (id == R.id.nav_settings) Toast.makeText(this, "Cài đặt", Toast.LENGTH_SHORT).show();
         else if (id == R.id.nav_about) Toast.makeText(this, "Về ứng dụng", Toast.LENGTH_SHORT).show();
+        else if (id == R.id.nav_add_widget) {
+            requestPinWidget();
+        }
         else if (id == R.id.nav_logout) showLogoutDialog();
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
@@ -818,5 +824,34 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             notificationListener = null;
         }
         // 🔼 KẾT THÚC CẬP NHẬT 🔼
+    }
+
+    private void requestPinWidget() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            AppWidgetManager appWidgetManager = getSystemService(AppWidgetManager.class);
+
+            // Lấy ComponentName của Widget Provider của bạn
+            ComponentName myProvider = new ComponentName(this, TodayTasksWidgetProvider.class);
+
+            if (appWidgetManager != null && appWidgetManager.isRequestPinAppWidgetSupported()) {
+                // Hiển thị hộp thoại hệ thống để xin phép ghim
+                appWidgetManager.requestPinAppWidget(myProvider, null, null);
+            } else {
+                // Fallback nếu launcher không hỗ trợ
+                Toast.makeText(this, "Trình khởi chạy của bạn không hỗ trợ ghim widget.", Toast.LENGTH_LONG).show();
+                showManualWidgetToast();
+            }
+        } else {
+            // Fallback cho các phiên bản Android cũ
+            showManualWidgetToast();
+        }
+    }
+
+    /**
+     * Hiển thị hướng dẫn thêm widget thủ công cho các phiên bản Android cũ
+     * hoặc launcher không hỗ trợ.
+     */
+    private void showManualWidgetToast() {
+        Toast.makeText(this, "Để thêm widget, vui lòng nhấn giữ màn hình chính và chọn 'Widgets'", Toast.LENGTH_LONG).show();
     }
 }
