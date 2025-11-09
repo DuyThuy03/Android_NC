@@ -200,31 +200,33 @@
                 android:id="@+id/bottomNavContainer"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="@drawable/bg_bottom_nav"
                 android:gravity="center"
-                android:orientation="horizontal"
-                android:background="@drawable/bg_bottom_nav">
+                android:orientation="horizontal">
 
                 <ImageButton
                     android:id="@+id/nav_menu"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
                     android:layout_marginHorizontal="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    app:tint="?attr/colorOnSurface"
-                    android:src="@drawable/ic_menu" />
+                    android:src="@drawable/ic_menu"
+                    app:tint="?attr/colorOnSurface" />
 
                 <ImageButton
                     android:id="@+id/nav_list"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
                     android:layout_marginHorizontal="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    app:tint="?attr/colorOnSurface"
-                    android:src="@drawable/ic_home" />
+                    android:src="@drawable/ic_home"
+                    app:tint="?attr/colorOnSurface" />
 
                 <FrameLayout
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
+                    android:layout_width="62dp"
+                    android:layout_height="62dp"
                     android:layout_marginHorizontal="12dp"
                     android:elevation="10dp">
 
@@ -232,20 +234,21 @@
                         android:id="@+id/nav_add"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:backgroundTint="@color/primary_color"
                         android:background="@drawable/bg_fab_add"
-                        app:tint="@android:color/white"
-                        android:src="@drawable/ic_add"/>
+                        android:backgroundTint="@color/primary_color"
+                        android:src="@drawable/ic_add"
+                        app:tint="@android:color/white" />
                 </FrameLayout>
 
                 <ImageButton
                     android:id="@+id/nav_calendar"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
                     android:layout_marginHorizontal="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    app:tint="?attr/colorOnSurface"
-                    android:src="@drawable/ic_calendar" />
+                    android:src="@drawable/ic_calendar"
+                    app:tint="?attr/colorOnSurface" />
 
             </LinearLayout>
         </LinearLayout>

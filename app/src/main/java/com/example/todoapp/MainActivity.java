@@ -95,11 +95,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private static final int NOTIFICATION_PERMISSION_CODE = 101;
     private ListenerRegistration taskListener;
     private ListenerRegistration notificationListener; // ⬅️ ĐÃ ĐỔI TÊN
+    private ImageButton navList, navCalendar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Bottom Navigation
+        navList = findViewById(R.id.nav_list);
+        navCalendar = findViewById(R.id.nav_calendar);
+        // nav_list đang được chọn
+        navList.setColorFilter(ContextCompat.getColor(this, R.color.nav_active_color));
+        navCalendar.setColorFilter(ContextCompat.getColor(this, R.color.nav_inactive_color));
+        navList.setOnClickListener(v -> {
+        });
+        navCalendar.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, CalendarActivity.class);
+            startActivity(intent);
+            overridePendingTransition(0, 0); // tắt animation chuyển màn
+//            finish();
+        });
+
 
         taskRepository = new FirebaseTaskRepository();
         categoryRepository = new FirebaseCategoryRepository();

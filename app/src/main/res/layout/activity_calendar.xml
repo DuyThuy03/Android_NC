@@ -16,11 +16,11 @@
         app:title="Lịch Công Việc"
         app:titleTextColor="@color/white"
         app:navigationIcon="@drawable/ic_arrow_back" /> <CalendarView
-    android:id="@+id/calendarView"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@color/white"
-    android:elevation="4dp" />
+        android:id="@+id/calendarView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:elevation="4dp" />
 
     <TextView
         android:id="@+id/tvSelectedDateTasks"

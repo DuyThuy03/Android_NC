@@ -19,6 +19,10 @@
     <color name="tab_active">#1679AB</color>
     <color name="tab_inactive">#9E9E9E</color>
 
+    <!-- ========== MÀU Bottom Navigation ========== -->
+    <color name="nav_active_color">#2196F3</color> <!-- xanh lam hoặc tuỳ -->
+    <color name="nav_inactive_color">#8A8A8A</color> <!-- xám -->
+
     <!-- ========== MỨC ƯU TIÊN ========== -->
     <color name="priority_high">#E53935</color>
     <color name="priority_medium">#FB8C00</color>
