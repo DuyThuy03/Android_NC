@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#F5F7FA">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:padding="24dp">
+
+        <!-- Logo Section -->
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/ic_app_logo"
+            android:contentDescription="Logo ứng dụng"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="24dp"
+            android:elevation="4dp" />
+
+        <!-- App Name -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ToDoApp"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#2C3E50"
+            android:letterSpacing="0.02"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Version -->
+        <TextView
+            android:id="@+id/tvVersion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Phiên bản: 1.0.0"
+            android:textSize="14sp"
+            android:textColor="#7F8C8D"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Description Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:elevation="2dp"
+            android:radius="12dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ToDoApp giúp bạn ghi chú, theo dõi và quản lý công việc hằng ngày dễ dàng hơn."
+                android:textSize="16sp"
+                android:textColor="#34495E"
+                android:lineSpacingExtra="4dp"
+                android:textAlignment="center"
+                android:padding="20dp" />
+        </androidx.cardview.widget.CardView>
+
+        <!-- Developer Info Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:elevation="2dp"
+            android:radius="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nhà phát triển"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#7F8C8D"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nhóm 9"
+                    android:textSize="16sp"
+                    android:textColor="#2C3E50"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="support@todoapp.com"
+                    android:textSize="15sp"
+                    android:textColor="#3498DB"
+                    android:autoLink="email" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Footer Links -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:id="@+id/tvPrivacyPolicy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Chính sách quyền riêng tư"
+                android:textColor="#3498DB"
+                android:textSize="14sp"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" | "
+                android:textColor="#BDC3C7"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvTermsOfUse"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Điều khoản sử dụng"
+                android:textColor="#3498DB"
+                android:textSize="14sp"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

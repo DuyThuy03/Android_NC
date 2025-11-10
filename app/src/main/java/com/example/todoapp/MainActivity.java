@@ -363,10 +363,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     // (Giữ nguyên onNavigationItemSelected, showLogoutDialog, redirectToLogin, onBackPressed)
     @Override public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.nav_profile) Toast.makeText(this, "Thông tin cá nhân", Toast.LENGTH_SHORT).show();
-        else if (id == R.id.nav_statistics) startActivity(new Intent(MainActivity.this, StatisticsActivity.class));
-        else if (id == R.id.nav_settings) Toast.makeText(this, "Cài đặt", Toast.LENGTH_SHORT).show();
-        else if (id == R.id.nav_about) Toast.makeText(this, "Về ứng dụng", Toast.LENGTH_SHORT).show();
+
+         if (id == R.id.nav_statistics) startActivity(new Intent(MainActivity.this, StatisticsActivity.class));
+        else if (id == R.id.nav_settings) {
+
+         }
+        else if (id == R.id.nav_about) {  Intent intent = new Intent(MainActivity.this, AboutActivity.class);
+             startActivity(intent);}
         else if (id == R.id.nav_add_widget) {
             requestPinWidget();
         }
