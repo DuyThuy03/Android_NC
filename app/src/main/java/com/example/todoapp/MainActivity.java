@@ -355,7 +355,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         }
                     })
                     .addOnFailureListener(e -> {
-                        android.util.Log.e("DEBUG_USER", "❌ Error: " + e.getMessage());
+//                        android.util.Log.e("DEBUG_USER", "❌ Error: " + e.getMessage());
                     });
         }
     }
@@ -365,9 +365,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         int id = item.getItemId();
 
          if (id == R.id.nav_statistics) startActivity(new Intent(MainActivity.this, StatisticsActivity.class));
-        else if (id == R.id.nav_settings) {
-
-         }
         else if (id == R.id.nav_about) {  Intent intent = new Intent(MainActivity.this, AboutActivity.class);
              startActivity(intent);}
         else if (id == R.id.nav_add_widget) {
@@ -553,7 +550,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     showLoading(false);
                     if (error != null) {
                         android.util.Log.e("MainActivity", "Lỗi lắng nghe task: ", error);
-                        Toast.makeText(this, "Lỗi tải dữ liệu: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+//                        Toast.makeText(this, "Lỗi tải dữ liệu: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                         return;
                     }
                     allTasks.clear();
