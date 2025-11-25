@@ -58,6 +58,7 @@ dependencies {
     // Facebook SDK
     implementation("com.facebook.android:facebook-login:16.2.0")
     implementation("com.facebook.android:facebook-android-sdk:16.2.0")
+    implementation("com.google.firebase:firebase-database:22.0.1")
 
     // Test
     testImplementation("junit:junit:4.13.2")

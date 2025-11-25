@@ -70,10 +70,10 @@ public class TaskDetailActivity extends AppCompatActivity {
     private ArrayList<String> currentSubtasks;
     private ArrayList<String> currentNotes;
 
-    // 🔽 THÊM BIẾN NÀY ĐỂ GIỮ TASK OBJECT ĐẦY ĐỦ 🔽
+
     private Task currentTaskObject;
 
-    // For category spinner
+
     private List<CategoryItem> categoryList;
     private ArrayAdapter<CategoryItem> categoryAdapter;
 
@@ -82,7 +82,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail_task);
 
-        // Khởi tạo Firestore và Repository
+
         db = FirebaseFirestore.getInstance();
         taskRepository = new FirebaseTaskRepository();
         categoryList = new ArrayList<>();

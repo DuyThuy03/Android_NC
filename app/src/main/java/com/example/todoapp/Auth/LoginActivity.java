@@ -13,6 +13,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.todoapp.MainActivity;
+import com.example.todoapp.ProductActivity;
 import com.example.todoapp.R;
 import com.example.todoapp.Repository.FirebaseAuthRepository;
 import com.facebook.AccessToken;
@@ -186,7 +187,7 @@ public class LoginActivity extends AppCompatActivity {
                             "Đăng nhập thành công!",
                             Toast.LENGTH_SHORT).show();
 
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    Intent intent = new Intent(LoginActivity.this, ProductActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                     finish();
